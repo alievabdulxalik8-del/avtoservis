@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Электронная запись</title>
+<style>
+:root{--ink:#101820;--ink-2:#4A5964;--paper:#E8ECEF;--card:#fff;--line:#D4DBE0;
+--blue:#17549E;--blue-bg:#E4EDF9;--green:#1B7048;--green-bg:#DDF0E6;--r:12px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+.wrap{max-width:480px;margin:0 auto;padding:22px 16px 40px}
+h1{font-size:22px;margin-bottom:4px}
+p.lead{color:var(--ink-2);font-size:14px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+label{display:block;font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:5px}
+input,textarea{width:100%;font:inherit;font-size:16px;padding:12px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:14px}
+input:focus,textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:var(--blue)}
+button{width:100%;font:inherit;font-size:17px;font-weight:700;padding:14px;border-radius:10px;border:none;background:var(--blue);color:#fff;cursor:pointer}
+button:active{opacity:.85}
+button:disabled{opacity:.5}
+.err{color:#B02A2A;font-size:13px;margin-bottom:10px;display:none}
+.done{display:none;text-align:center;padding:30px 16px}
+.done .num{width:84px;height:84px;border-radius:50%;background:var(--green-bg);color:var(--green);font-size:36px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.done h2{font-size:19px;margin-bottom:6px}
+.done p{color:var(--ink-2);font-size:14px;margin-bottom:4px}
+.done a{display:inline-block;margin-top:18px;color:var(--blue);font-weight:700;text-decoration:none;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="form-block">
+    <h1 id="shopTitle">Электронная запись</h1>
+    <p class="lead">Заполните форму — и не нужно ждать у стойки.</p>
+    <div class="card">
+      <div class="err" id="err"></div>
+      <label>Ваше имя</label>
+      <input id="name" placeholder="Магомед">
+      <label>Телефон</label>
+      <input id="phone" type="tel" placeholder="+7 900 000-00-00">
+      <label>Марка авто</label>
+      <input id="car" placeholder="Приора">
+      <label>Гос. номер (если знаете)</label>
+      <input id="plate" placeholder="А001АА 05">
+      <label>Что случилось</label>
+      <textarea id="what" rows="3" placeholder="Не заводится, садится аккумулятор"></textarea>
+      <button id="submitBtn" onclick="submitForm()">Встать в очередь</button>
+    </div>
+  </div>
+
+  <div class="done" id="done">
+    <div class="num" id="posNum">—</div>
+    <h2>Вы записаны</h2>
+    <p id="doneMaster"></p>
+    <p id="doneCount"></p>
+    <a href="board.html">Посмотреть очередь на табло →</a>
+  </div>
+</div>
+
+<script>
+var BASE_URL = 'https://script.google.com/macros/s/AKfycbxm0im8X1Zgkouxru9VTb6cXdeQS892j5O4AXRz3AI4LCjxjFShCyL4IJcXLWMT_7v9Mg/exec';
+
+function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})}
+function iso(){var d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
+function uid(){return 'c'+Date.now()+Math.floor(Math.random()*900+100)}
+
+function pickMaster(board){
+  var m=(board.masters||[]).filter(function(x){return !x.busy||true});
+  if(!m.length)return '';
+  m.sort(function(a,b){return (a.busy?1:0)-(b.busy?1:0)||a.waiting-b.waiting});
+  return m[0].name;
+}
+
+function submitForm(){
+  var name=document.getElementById('name').value.trim();
+  var phone=document.getElementById('phone').value.trim();
+  var err=document.getElementById('err');
+  if(!name||!phone){err.textContent='Заполните имя и телефон.';err.style.display='block';return}
+  if(!BASE_URL||BASE_URL.indexOf('exec')<0){err.textContent='Запись временно недоступна, обратитесь к администратору.';err.style.display='block';return}
+  err.style.display='none';
+  var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Записываем…';
+
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true})})
+    .then(function(r){return r.json()})
+    .then(function(board){
+      var master=pickMaster(board||{});
+      var id=uid();
+      var rec={id:id,name:name,phone:phone,car:document.getElementById('car').value.trim(),
+        plate:document.getElementById('plate').value.trim().toUpperCase(),
+        date:iso(),time:'',what:document.getElementById('what').value.trim(),
+        status:'wait',master:master,ord:Date.now(),updated:Date.now(),deleted:0};
+      return fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,queue:[rec]})})
+        .then(function(r){return r.json()})
+        .then(function(res){return {res:res,id:id,master:master}});
+    })
+    .then(function(o){
+      var q=(o.res.queue||[]);
+      var pos=1;
+      for(var i=0;i<q.length;i++){if(q[i].id===o.id){pos=i+1;break}}
+      document.getElementById('form-block').style.display='none';
+      document.getElementById('done').style.display='block';
+      document.getElementById('posNum').textContent=pos;
+      document.getElementById('doneMaster').textContent=o.master?('Мастер: '+o.master):'Мастера распределит администратор';
+      document.getElementById('doneCount').textContent='Ваша позиция в сегодняшней очереди';
+    })
+    .catch(function(){
+      err.textContent='Не удалось отправить. Проверьте связь и попробуйте ещё раз.';err.style.display='block';
+      btn.disabled=false;btn.textContent='Встать в очередь';
+    });
+}
+</script>
+</body>
+</html>

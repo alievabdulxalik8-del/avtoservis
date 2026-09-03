@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Очередь — табло</title>
+<style>
+:root{--ink:#101820;--ink-2:#4A5964;--paper:#0E1B2B;--card:#16283D;--line:#26405C;
+--blue:#4FA3FF;--amber:#F5B94D;--green:#3FD08A;--red:#FF6B6B}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--paper);color:#fff;min-height:100vh;padding:24px}
+.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+h1{font-size:clamp(22px,4vw,34px)}
+.clock{font-size:clamp(18px,3vw,26px);color:var(--blue);font-variant-numeric:tabular-nums}
+.wrap{display:grid;grid-template-columns:2fr 1fr;gap:20px}
+@media(max-width:800px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.hd{padding:14px 18px;font-size:15px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:16px;padding:16px 18px;border-bottom:1px solid var(--line);font-size:clamp(16px,2.4vw,20px)}
+.row:last-child{border-bottom:none}
+.n{width:44px;height:44px;border-radius:12px;background:#1E3352;color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;flex:0 0 44px}
+.n.work{background:#3A2E12;color:var(--amber)}
+.n.done{background:#12331F;color:var(--green)}
+.nm{font-weight:700;flex:1}
+.sub{font-size:13px;color:var(--ink-2);margin-top:2px}
+.pill{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px}
+.p-wait{background:#1E3352;color:var(--blue)}
+.p-work{background:#3A2E12;color:var(--amber)}
+.p-done{background:#12331F;color:var(--green)}
+.mrow{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:none}
+.dot{width:11px;height:11px;border-radius:50%;flex:0 0 11px}
+.dot.free{background:var(--green)}.dot.busy{background:var(--amber)}
+.mnm{font-weight:700;font-size:17px}
+.msub{font-size:12px;color:var(--ink-2)}
+.empty{padding:40px 18px;text-align:center;color:var(--ink-2);font-size:16px}
+.qr{margin-top:20px;text-align:center;padding:18px;background:var(--card);border:1px solid var(--line);border-radius:16px;font-size:14px;color:var(--ink-2)}
+.qr b{color:#fff;display:block;font-size:16px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1 id="shopName">Очередь сегодня</h1>
+  <div class="clock" id="clock"></div>
+</div>
+<div class="wrap">
+  <div class="card">
+    <div class="hd">Кто сейчас в очереди</div>
+    <div id="qList"></div>
+  </div>
+  <div>
+    <div class="card">
+      <div class="hd">Мастера</div>
+      <div id="mList"></div>
+    </div>
+    <div class="qr">
+      <b>Новый клиент?</b>
+      Отсканируйте QR или перейдите по ссылке для самозаписи — займите место в очереди без ожидания у стойки.
+    </div>
+  </div>
+</div>
+
+<script>
+var BASE_URL = 'https://script.google.com/macros/s/AKfycbxm0im8X1Zgkouxru9VTb6cXdeQS892j5O4AXRz3AI4LCjxjFShCyL4IJcXLWMT_7v9Mg/exec';
+
+function tick(){
+  var d=new Date();
+  document.getElementById('clock').textContent=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+}
+setInterval(tick,1000);tick();
+
+function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})}
+
+function render(data){
+  var lbl={wait:'Ждёт',work:'В работе',done:'Готово'},cl={wait:'',work:'work',done:'done'},pl={wait:'p-wait',work:'p-work',done:'p-done'};
+  var q=(data.queue||[]);
+  var qEl=document.getElementById('qList');
+  if(!q.length){qEl.innerHTML='<div class="empty">Пока никто не записан</div>'}
+  else{
+    qEl.innerHTML=q.map(function(c,i){
+      var s=c.status||'wait';
+      return '<div class="row"><div class="n '+cl[s]+'">'+(i+1)+'</div>'+
+        '<div style="flex:1"><div class="nm">'+esc(c.name)+(c.time?' <span style="font-weight:400;color:var(--ink-2);font-size:14px">· '+esc(c.time)+'</span>':'')+'</div>'+
+        (c.master?'<div class="sub">мастер: '+esc(c.master)+'</div>':'')+'</div>'+
+        '<span class="pill '+pl[s]+'">'+lbl[s]+'</span></div>';
+    }).join('');
+  }
+  var m=(data.masters||[]);
+  var mEl=document.getElementById('mList');
+  if(!m.length){mEl.innerHTML='<div class="empty">Список мастеров пуст</div>'}
+  else{
+    mEl.innerHTML=m.map(function(x){
+      return '<div class="mrow"><span class="dot '+(x.busy?'busy':'free')+'"></span>'+
+        '<div><div class="mnm">'+esc(x.name)+'</div>'+
+        '<div class="msub">'+esc(x.spec||'')+(x.spec?' · ':'')+(x.busy?'занят':'свободен')+(x.waiting?' · ждут: '+x.waiting:'')+'</div></div></div>';
+    }).join('');
+  }
+}
+
+function load(){
+  if(!BASE_URL||BASE_URL.indexOf('exec')<0){
+    document.getElementById('qList').innerHTML='<div class="empty">Табло не подключено к базе</div>';return;
+  }
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true})})
+    .then(function(r){return r.json()})
+    .then(function(res){if(res&&res.ok)render(res)})
+    .catch(function(){});
+}
+load();setInterval(load,15000);
+</script>
+</body>
+</html>
