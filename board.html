@@ -58,6 +58,7 @@ h1{font-size:clamp(22px,4vw,34px)}
 
 <script>
 var BASE_URL = 'https://script.google.com/macros/s/AKfycbzJat5sOG28_1h9PKPvlGdryltTxAG2rK49k8pQqbfL4VEsHN1maqhzR36XnObBkak-0Q/exec';
+var SHOP = new URLSearchParams(location.search).get('s') || '';
 
 function tick(){
   var d=new Date();
@@ -97,7 +98,10 @@ function load(){
   if(!BASE_URL||BASE_URL.indexOf('exec')<0){
     document.getElementById('qList').innerHTML='<div class="empty">Табло не подключено к базе</div>';return;
   }
-  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true})})
+  if(!SHOP){
+    document.getElementById('qList').innerHTML='<div class="empty">В ссылке не указан код точки — добавьте ?s=код в конец адреса</div>';return;
+  }
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,shop:SHOP})})
     .then(function(r){return r.json()})
     .then(function(res){if(res&&res.ok)render(res)})
     .catch(function(){});
