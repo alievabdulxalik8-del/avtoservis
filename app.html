@@ -127,6 +127,7 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     <div class="f"><label>Телефон</label><input id="stPhone" placeholder="+7 900 000-00-00"></div>
     <div class="f"><label>Рабочие часы (покажутся клиентам)</label><input id="stHours" placeholder="Пн–Сб 9:00–19:00, вс выходной"></div>
     <div class="f"><label>Адрес общей базы (ссылка .../exec)</label><input id="stUrl" placeholder="https://script.google.com/macros/s/…/exec"></div>
+    <div class="f"><label>Код доступа</label><input id="stPass" type="password" placeholder="ваш секретный код"></div>
     <div class="err" id="setupErr"></div>
     <button class="b pri" onclick="finishSetup()" style="width:100%">Начать работу</button>
   </div>
@@ -199,6 +200,8 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     <div class="card pad" style="margin-top:12px">
       <label>Адрес общей базы</label>
       <div class="f"><input id="sUrl"></div>
+      <label>Код доступа</label>
+      <div class="f"><input id="sPass" type="password"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="b" onclick="sync(true)">Синхронизировать</button>
         <button class="b" onclick="pushAll()">Выгрузить всё в базу</button>
@@ -375,12 +378,13 @@ function finishSetup(){
   D.config={name:name,master:document.getElementById('stFio').value.trim(),
     spec:document.getElementById('stSpec').value.trim(),phone:document.getElementById('stPhone').value.trim(),
     hours:document.getElementById('stHours').value.trim(),war:'',price:[]};
-  D.device.url=url;D.cfgUpd=Date.now();D.cfgDirty=1;
+  D.device.url=url;D.device.pass=document.getElementById('stPass').value.trim();D.cfgUpd=Date.now();D.cfgDirty=1;
   saveLocal();boot();
 }
 function applyAll(){
   applyShop();today();renderOrders();renderBase();renderMore();setSync();
   document.getElementById('sUrl').value=D.device.url||'';
+  document.getElementById('sPass').value=D.device.pass||'';
 }
 
 function dirtyList(){
@@ -415,12 +419,13 @@ function merge(arr,inc){
   return n;
 }
 function sync(manual){
+  if(document.getElementById('sUrl'))saveDevicePass();
   var url=(D.device.url||'').trim();
   if(!url){if(manual){go('set');flash('Сначала укажите адрес базы',true)}return}
   if(syncing)return;
   syncing=true;setSync('go');
   var p=dirtyList();
-  var body={since:D.lastSync||0,queue:p.queue,orders:p.orders,config:p.config};
+  var body={since:D.lastSync||0,pass:D.device.pass||'',queue:p.queue,orders:p.orders,config:p.config};
   fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
     .then(function(r){return r.json()})
     .then(function(res){
@@ -811,7 +816,13 @@ function applyShop(){
   document.getElementById('shopName').firstChild.textContent=s.name||'Автосервис';
   document.getElementById('shopSub').textContent=s.master||'запись и заказ-наряды';
 }
+function saveDevicePass(){
+  D.device.url=document.getElementById('sUrl').value.trim();
+  D.device.pass=document.getElementById('sPass').value.trim();
+  saveLocal();
+}
 function saveConfig(){
+  saveDevicePass();
   D.config.name=document.getElementById('sName').value.trim();
   D.config.master=document.getElementById('sFio').value.trim();
   D.config.phone=document.getElementById('sPhone').value.trim();
