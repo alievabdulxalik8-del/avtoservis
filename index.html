@@ -178,8 +178,7 @@ function renderCal(){
   var html='';
   cells.forEach(function(cd){
     var ds=iso(cd);
-    var known=lastDays.hasOwnProperty(ds);
-    var avail=known && (!maxDate || ds<=maxDate) && ds>=today;
+    var avail=ds>=today;
     var cls='calcell'+(avail?' avail':'')+(ds===today?' today':'')+(ds===selDate?' on':'');
     var cnt=lastDays[ds]||0;
     var dotCls=cnt===0?'free':cnt<4?'mid':'busy';
