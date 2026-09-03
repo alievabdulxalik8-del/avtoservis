@@ -141,16 +141,27 @@ function dayLabel(ds){
 }
 
 function myBookings(){
-  try{return JSON.parse(localStorage.getItem(LKEY)||'{}')}catch(e){return {}}
+  try{return JSON.parse(localStorage.getItem(LKEY)||'[]')}catch(e){return []}
 }
-function saveBooking(date,id,pos){
-  var m=myBookings();m[date]={id:id,pos:pos};
-  try{localStorage.setItem(LKEY,JSON.stringify(m))}catch(e){}
+function saveAll(arr){
+  try{localStorage.setItem(LKEY,JSON.stringify(arr))}catch(e){}
+}
+function findBooking(date){
+  return myBookings().find(function(b){return b.date===date});
+}
+// Записывает/обновляет бронь. Если oldDate указан — это перенос существующей (не расходует лимит устройства).
+function upsertLocalBooking(oldDate,newDate,id,pos){
+  var arr=myBookings();
+  if(oldDate){
+    var idx=arr.findIndex(function(b){return b.date===oldDate});
+    if(idx>=0){arr[idx]={date:newDate,id:id,pos:pos};saveAll(arr);return}
+  }
+  arr.push({date:newDate,id:id,pos:pos});saveAll(arr);
 }
 function clearBooking(date){
-  var m=myBookings();delete m[date];
-  try{localStorage.setItem(LKEY,JSON.stringify(m))}catch(e){}
+  saveAll(myBookings().filter(function(b){return b.date!==date}));
 }
+var DEVICE_CAP=3;
 
 /* ---------- КАЛЕНДАРЬ ---------- */
 function mondayOf(d){
@@ -195,7 +206,7 @@ function anotherDay(){
   document.getElementById('done').style.display='none';
   document.getElementById('form-card').style.display='block';
   var dates=Object.keys(lastDays).sort();
-  var next=dates.find(function(ds){return ds>=iso()&&!myBookings()[ds]});
+  var next=dates.find(function(ds){return ds>=iso()&&!findBooking(ds)});
   if(next)pickDay(next);
 }
 
@@ -233,16 +244,23 @@ function render(data){
     }).join('');
   }
   document.getElementById('refreshTxt').textContent='обновляется автоматически';
+
+  // Если для этого дня уже есть своя запись, но её позиция ещё неизвестна (пришли сюда после
+  // подтверждения переноса или просмотра чужого конфликта) — найдём её по id в списке очереди.
+  var mine=findBooking(selDate);
+  if(mine&&(mine.pos==null||mine.pos==='…')){
+    for(var k=0;k<q.length;k++){if(q[k].id===mine.id){upsertLocalBooking(null,selDate,mine.id,k+1);break}}
+  }
   updateFormState();
 }
 
 function updateFormState(){
-  var b=myBookings()[selDate];
+  var b=findBooking(selDate);
   if(b){
     document.getElementById('form-card').style.display='none';
     document.getElementById('done').style.display='block';
-    document.getElementById('posNum').textContent=b.pos||'—';
-    document.getElementById('doneH2').textContent=b.pending?'Записываем…':'Вы записаны';
+    document.getElementById('posNum').textContent=(b.pos&&b.pos!=='…')?b.pos:'—';
+    document.getElementById('doneH2').textContent=b.pos==='…'?'Записываем…':'Вы записаны';
     document.getElementById('doneTxt').textContent='Ваша позиция в очереди на '+dayLabel(selDate);
   } else {
     document.getElementById('form-card').style.display='block';
@@ -269,6 +287,10 @@ function submitForm(){
   var err=document.getElementById('err');
   if(!name||!phone){err.textContent='Заполните имя и телефон.';err.style.display='block';return}
   if(!BASE_URL||BASE_URL.indexOf('exec')<0){err.textContent='Запись временно недоступна.';err.style.display='block';return}
+  if(myBookings().length>=DEVICE_CAP){
+    err.textContent='С этого устройства уже сделано '+DEVICE_CAP+' записи. Для новой — обратитесь в мастерскую напрямую.';
+    err.style.display='block';return;
+  }
   err.style.display='none';
 
   var id=uid(),day=selDate||iso();
@@ -277,21 +299,51 @@ function submitForm(){
     date:day,time:'',what:document.getElementById('what').value.trim(),
     status:'wait',ord:Date.now(),updated:Date.now(),deleted:0};
 
-  // Мгновенно, ещё до ответа сервера, прячем форму — без этого за пару секунд ожидания
-  // можно было успеть отправить форму второй раз.
-  submitting=true;
-  saveBooking(day,id,'…');
-  updateFormState();
+  doSubmit(rec,day,id,false);
+}
 
-  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,date:day,queue:[rec]})})
+function doSubmit(rec,day,id,confirmMove){
+  submitting=true;
+  var err=document.getElementById('err');
+  if(!confirmMove){
+    // Мгновенно, ещё до ответа сервера, прячем форму — без этого за пару секунд ожидания
+    // можно было успеть отправить форму второй раз.
+    upsertLocalBooking(null,day,id,'…');
+    updateFormState();
+  }
+  var body={board:true,date:day,queue:[Object.assign({},rec,{confirmMove:!!confirmMove})]};
+
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
     .then(function(r){return r.json()})
     .then(function(res){
       if(!res||!res.ok)throw new Error('fail');
+
+      // Конфликт: у этого номера уже есть активная запись на другой день.
+      if(res.conflicts&&res.conflicts[id]){
+        if(!confirmMove)clearBooking(day);
+        submitting=false;
+        var conf=res.conflicts[id],oldDay=conf.date;
+        upsertLocalBooking(null,oldDay,conf.id,null);
+        var ok=confirm('У вас уже есть запись на '+dayLabel(oldDay)+'. Перенести её на '+dayLabel(day)+'?');
+        if(ok){
+          doSubmit(rec,day,id,true);
+        } else {
+          pickDay(oldDay);
+        }
+        return;
+      }
+
       var q=(res.queue||[]);
       var realId=(res.idMap&&res.idMap[id])?res.idMap[id]:id;
       var pos=q.length;
       for(var i=0;i<q.length;i++){if(q[i].id===realId){pos=i+1;break}}
-      saveBooking(day,id,pos);
+      if(confirmMove){
+        // существующая запись переехала с другого дня — обновляем локально по старой дате
+        var moved=myBookings().find(function(b){return b.id===realId});
+        upsertLocalBooking(moved?moved.date:null,day,realId,pos);
+      } else {
+        upsertLocalBooking(null,day,realId,pos);
+      }
       document.getElementById('name').value='';document.getElementById('phone').value='';
       document.getElementById('car').value='';document.getElementById('plate').value='';document.getElementById('what').value='';
       submitting=false;
@@ -299,8 +351,7 @@ function submitForm(){
       load();
     })
     .catch(function(){
-      // не получилось — откатываем оптимистичную запись, показываем форму снова
-      clearBooking(day);
+      if(!confirmMove)clearBooking(day);
       submitting=false;
       updateFormState();
       err.textContent='Не удалось отправить. Проверьте связь и попробуйте ещё раз.';err.style.display='block';
