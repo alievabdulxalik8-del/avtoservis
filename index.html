@@ -38,8 +38,21 @@ button:disabled{opacity:.5}
 .done{display:none;text-align:center;padding:20px 4px}
 .done .num{width:72px;height:72px;border-radius:50%;background:var(--green-bg);color:var(--green);font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
 .done h2{font-size:18px;margin-bottom:6px}
-.done p{color:var(--ink-2);font-size:14px}
+.done p{color:var(--ink-2);font-size:14px;margin-bottom:4px}
+.done .lnk{display:inline-block;margin-top:14px;color:var(--blue);font-weight:700;font-size:14px;cursor:pointer;text-decoration:underline}
 .refresh{font-size:12px;color:var(--ink-2);text-align:center;margin-top:6px}
+.days{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 14px;-webkit-overflow-scrolling:touch}
+.day{flex:0 0 auto;min-width:64px;text-align:center;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.day.on{background:var(--blue);border-color:var(--blue)}
+.day.on .dn,.day.on .dl{color:#fff}
+.day .dn{font-weight:700;font-size:14px;color:var(--ink)}
+.day .dl{font-size:11px;color:var(--ink-2);margin-top:2px}
+.day .dc{font-size:10px;margin-top:3px;font-weight:700}
+.day .dc.free{color:var(--green)}
+.day.on .dc.free{color:#DDF0E6}
+.day .dc.busy{color:var(--amber)}
+.day.on .dc.busy{color:#FCEFD8}
+.hint{font-size:12px;color:var(--ink-2);text-align:center;margin:-8px 0 14px}
 </style>
 </head>
 <body>
@@ -51,15 +64,18 @@ button:disabled{opacity:.5}
     <div class="info" id="infoBlock"></div>
   </div>
 
+  <div class="days" id="dayStrip"></div>
+  <p class="hint">Выберите день — увидите очередь и сможете записаться на него</p>
+
   <div class="card">
-    <div class="hd"><span>Очередь сегодня</span><span id="qCount"></span></div>
+    <div class="hd"><span id="qTitle">Очередь</span><span id="qCount"></span></div>
     <div id="qList"></div>
   </div>
   <div class="refresh" id="refreshTxt"></div>
 
   <div class="card" style="margin-top:18px" id="form-card">
     <div class="pad">
-      <label style="font-size:16px;margin-bottom:10px">Хотите записаться?</label>
+      <label style="font-size:16px;margin-bottom:10px" id="formTitle">Хотите записаться?</label>
       <div class="err" id="err"></div>
       <input id="name" placeholder="Ваше имя">
       <input id="phone" type="tel" placeholder="Телефон">
@@ -74,17 +90,65 @@ button:disabled{opacity:.5}
     <div class="pad">
       <div class="num" id="posNum">—</div>
       <h2>Вы записаны</h2>
-      <p id="doneTxt">Ваша позиция в сегодняшней очереди</p>
+      <p id="doneTxt">Ваша позиция в очереди на выбранный день</p>
+      <span class="lnk" onclick="anotherDay()">Записаться на другой день</span>
     </div>
   </div>
 </div>
 
 <script>
 var BASE_URL = 'https://script.google.com/macros/s/AKfycbyW17fICbE-GjMS_jMk9OaAVlONZEuKCWqsFUKB86emJzqq1WEtpUuEqTT15waLVGiAHQ/exec';
+var LKEY = 'client_bookings_v1';
+var selDate = null;
+var lastDays = [];
 
 function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})}
-function iso(){var d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
+function iso(d){var x=d||new Date();return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 function uid(){return 'c'+Date.now()+Math.floor(Math.random()*900+100)}
+function ruShort(ds){
+  var d=new Date(ds+'T00:00:00'),wd=['вс','пн','вт','ср','чт','пт','сб'][d.getDay()];
+  return {num:d.getDate()+'.'+('0'+(d.getMonth()+1)).slice(-2),wd:wd};
+}
+function dayLabel(ds){
+  var t=iso(),tm=iso(new Date(Date.now()+864e5));
+  if(ds===t)return 'Сегодня';
+  if(ds===tm)return 'Завтра';
+  var r=ruShort(ds);return r.wd.charAt(0).toUpperCase()+r.wd.slice(1)+', '+r.num;
+}
+
+function myBookings(){
+  try{return JSON.parse(localStorage.getItem(LKEY)||'{}')}catch(e){return {}}
+}
+function saveBooking(date,id,pos){
+  var m=myBookings();m[date]={id:id,pos:pos};
+  try{localStorage.setItem(LKEY,JSON.stringify(m))}catch(e){}
+}
+function clearBooking(date){
+  var m=myBookings();delete m[date];
+  try{localStorage.setItem(LKEY,JSON.stringify(m))}catch(e){}
+}
+
+function renderDays(days){
+  lastDays=days||[];
+  var el=document.getElementById('dayStrip');
+  el.innerHTML=lastDays.map(function(d){
+    var busy=d.count>=6,mid=d.count>=3;
+    var cls=d.date===selDate?' on':'';
+    var dc=d.count?('<div class="dc '+(busy?'busy':'free')+'">'+d.count+' машин'+(busy?'':' ')+(busy?' — плотно':'')+'</div>'):'<div class="dc free">свободно</div>';
+    var r=ruShort(d.date);
+    return '<div class="day'+cls+'" onclick="pickDay(\''+d.date+'\')"><div class="dn">'+(d.date===iso()?'Сегодня':d.date===iso(new Date(Date.now()+864e5))?'Завтра':r.wd)+'</div><div class="dl">'+r.num+'</div>'+dc+'</div>';
+  }).join('');
+}
+
+function pickDay(d){
+  selDate=d;renderDays(lastDays);load();updateFormState();
+}
+function anotherDay(){
+  document.getElementById('done').style.display='none';
+  document.getElementById('form-card').style.display='block';
+  var next=lastDays.find(function(d){return !myBookings()[d.date]});
+  if(next)pickDay(next.date);
+}
 
 function render(data){
   var info=data.info||{};
@@ -95,11 +159,16 @@ function render(data){
   if(info.phone) infoHtml+='</div><div class="info" style="border-top:1px solid var(--line)"><svg viewBox="0 0 24 24"><path d="M4 5c0 8 7 15 15 15l3-4-6-2-2 2c-3-1-6-4-7-7l2-2-2-6z"/></svg><div><b>Телефон</b><br><a href="tel:'+esc(info.phone)+'" style="color:var(--blue);text-decoration:none">'+esc(info.phone)+'</a></div>';
   document.getElementById('infoBlock').innerHTML=infoHtml||'<div>Добро пожаловать! Запишитесь ниже.</div>';
 
+  if(data.days&&data.days.length)renderDays(data.days);
+  if(!selDate)selDate=data.day||iso();
+
+  document.getElementById('qTitle').textContent='Очередь · '+dayLabel(selDate);
+
   var q=data.queue||[];
   var qEl=document.getElementById('qList');
   document.getElementById('qCount').textContent=q.length?('всего: '+q.length):'';
   var lbl={wait:'Ждёт',work:'В работе',done:'Готово'},cl={wait:'',work:'work',done:'done'},pl={wait:'p-wait',work:'p-work',done:'p-done'};
-  if(!q.length){qEl.innerHTML='<div class="empty">Пока никто не записан — вы можете быть первым</div>'}
+  if(!q.length){qEl.innerHTML='<div class="empty">На этот день пока никто не записан</div>'}
   else{
     qEl.innerHTML=q.map(function(c,i){
       var s=c.status||'wait';
@@ -109,13 +178,28 @@ function render(data){
     }).join('');
   }
   document.getElementById('refreshTxt').textContent='обновляется автоматически';
+  updateFormState();
+}
+
+function updateFormState(){
+  var b=myBookings()[selDate];
+  if(b){
+    document.getElementById('form-card').style.display='none';
+    document.getElementById('done').style.display='block';
+    document.getElementById('posNum').textContent=b.pos||'—';
+    document.getElementById('doneTxt').textContent='Ваша позиция в очереди на '+dayLabel(selDate).toLowerCase();
+  } else {
+    document.getElementById('form-card').style.display='block';
+    document.getElementById('done').style.display='none';
+    document.getElementById('formTitle').textContent='Записаться на '+dayLabel(selDate).toLowerCase();
+  }
 }
 
 function load(){
   if(!BASE_URL||BASE_URL.indexOf('exec')<0){
     document.getElementById('qList').innerHTML='<div class="empty">Страница не подключена к базе</div>';return;
   }
-  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true})})
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,date:selDate})})
     .then(function(r){return r.json()})
     .then(function(res){if(res&&res.ok)render(res)})
     .catch(function(){});
@@ -131,21 +215,26 @@ function submitForm(){
   err.style.display='none';
   var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Записываем…';
 
-  var id=uid();
+  var id=uid(),day=selDate||iso();
   var rec={id:id,name:name,phone:phone,car:document.getElementById('car').value.trim(),
     plate:document.getElementById('plate').value.trim().toUpperCase(),
-    date:iso(),time:'',what:document.getElementById('what').value.trim(),
+    date:day,time:'',what:document.getElementById('what').value.trim(),
     status:'wait',ord:Date.now(),updated:Date.now(),deleted:0};
 
-  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,queue:[rec]})})
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,date:day,queue:[rec]})})
     .then(function(r){return r.json()})
     .then(function(res){
       var q=(res.queue||[]);
-      var pos=1;
-      for(var i=0;i<q.length;i++){if(q[i].id===id){pos=i+1;break}}
-      document.getElementById('form-card').style.display='none';
-      document.getElementById('done').style.display='block';
-      document.getElementById('posNum').textContent=pos;
+      var realId=(res.idMap&&res.idMap[id])?res.idMap[id]:id;
+      var pos=q.length;
+      for(var i=0;i<q.length;i++){
+        if(q[i].id===realId){pos=i+1;break}
+      }
+      saveBooking(day,id,pos);
+      document.getElementById('name').value='';document.getElementById('phone').value='';
+      document.getElementById('car').value='';document.getElementById('plate').value='';document.getElementById('what').value='';
+      btn.disabled=false;btn.textContent='Встать в очередь';
+      updateFormState();
     })
     .catch(function(){
       err.textContent='Не удалось отправить. Проверьте связь и попробуйте ещё раз.';err.style.display='block';
