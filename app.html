@@ -536,6 +536,7 @@ function renderQueue(){
           '<button class="b sm" onclick="move(\''+c.id+'\',1)"'+(i===L.length-1?' disabled':'')+'>↓</button>'+
         '</div>'+
         '<button class="b sm" onclick="nextStatus(\''+c.id+'\')">'+(s==='wait'?'Начать':s==='work'?'Готово':'Вернуть')+'</button>'+
+        '<button class="b sm" onclick="notifyQueue(\''+c.id+'\')">Написать</button>'+
         '<button class="b sm" onclick="moveDay(\''+c.id+'\',\'tom\')">На завтра</button>'+
         '<button class="b sm" onclick="openRec(\''+c.id+'\')">Изменить</button>'+
         '<button class="b sm pri" onclick="orderFrom(\''+c.id+'\')">Наряд</button>'+
@@ -557,6 +558,17 @@ function nextStatus(id){
   var c=byId(D.queue,id),s=c.status||'wait';
   c.status=s==='wait'?'work':s==='work'?'done':'wait';
   touch(c);save();renderQueue();
+}
+function notifyQueue(id){
+  var c=byId(D.queue,id);if(!c)return;
+  var s=c.status||'wait',day=dOnly(c.date),name=D.config.name||'Автосервис';
+  var t;
+  if(s==='wait')t='Здравствуйте! Вы записаны в очередь на '+(day===iso()?'сегодня':ruDate(day))+(c.time?', '+c.time:'')+'. '+name;
+  else if(s==='work')t='Здравствуйте! Ваша очередь подошла, ждём вас. '+name;
+  else t='Здравствуйте! Ваш автомобиль готов, можно забирать. '+name;
+  var ph=String(c.phone||'').replace(/\D/g,'');
+  if(ph.length===11&&ph[0]==='8')ph='7'+ph.slice(1);
+  window.open('https://wa.me/'+ph+'?text='+encodeURIComponent(t),'_blank');
 }
 function moveDay(id,to){
   var c=byId(D.queue,id);if(!c)return;
