@@ -58,7 +58,8 @@ button:disabled{opacity:.5}
 </div>
 
 <script>
-var BASE_URL = 'https://script.google.com/macros/s/AKfycbxm0im8X1Zgkouxru9VTb6cXdeQS892j5O4AXRz3AI4LCjxjFShCyL4IJcXLWMT_7v9Mg/exec';
+var BASE_URL = 'https://script.google.com/macros/s/AKfycbzJat5sOG28_1h9PKPvlGdryltTxAG2rK49k8pQqbfL4VEsHN1maqhzR36XnObBkak-0Q/exec';
+var SHOP = new URLSearchParams(location.search).get('s') || '';
 
 function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})}
 function iso(){var d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
@@ -77,10 +78,11 @@ function submitForm(){
   var err=document.getElementById('err');
   if(!name||!phone){err.textContent='Заполните имя и телефон.';err.style.display='block';return}
   if(!BASE_URL||BASE_URL.indexOf('exec')<0){err.textContent='Запись временно недоступна, обратитесь к администратору.';err.style.display='block';return}
+  if(!SHOP){err.textContent='Ссылка неверная — обратитесь к администратору.';err.style.display='block';return}
   err.style.display='none';
   var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Записываем…';
 
-  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true})})
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,shop:SHOP})})
     .then(function(r){return r.json()})
     .then(function(board){
       var master=pickMaster(board||{});
@@ -89,7 +91,7 @@ function submitForm(){
         plate:document.getElementById('plate').value.trim().toUpperCase(),
         date:iso(),time:'',what:document.getElementById('what').value.trim(),
         status:'wait',master:master,ord:Date.now(),updated:Date.now(),deleted:0};
-      return fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,queue:[rec]})})
+      return fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,shop:SHOP,queue:[rec]})})
         .then(function(r){return r.json()})
         .then(function(res){return {res:res,id:id,master:master}});
     })
