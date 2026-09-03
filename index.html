@@ -53,10 +53,10 @@ button:disabled{opacity:.5}
   </div>
 
   <div class="card">
-    <div class="hd"><span>Очередь сегодня</span><span id="qCount"></span></div>
+    <div class="hd"><span>Кто сейчас в записи</span><span id="qCount"></span></div>
     <div id="qList"></div>
   </div>
-  <div class="refresh" id="refreshTxt"></div>
+  <div class="refresh" id="refreshTxt">видно машину, проблему, дату и последние 2 цифры телефона — так вы найдёте себя, не видя чужих данных</div>
 
   <div class="card" id="form-card">
     <div class="pad">
@@ -131,6 +131,22 @@ function refreshView(){
   if(b)showDone(b);else showForm();
 }
 
+/** Сверяем каждую свою запись с живой лентой. Если её там больше нет — значит мастер
+ *  закрыл работу («Готово») или запись удалили — освобождаем слот для новой записи. */
+function checkMyBooking(feed){
+  var mine=myBookings(),changed=false;
+  mine.forEach(function(b){
+    var stillActive=feed.some(function(x){return x.id===b.id;});
+    if(!stillActive){removeBooking(b.date);changed=true}
+    else{
+      var sameDay=feed.filter(function(x){return x.date===b.date;});
+      var idx=sameDay.findIndex(function(x){return x.id===b.id;});
+      if(idx>=0&&idx+1!==b.pos){upsertBooking(b.date,b.date,b.id,idx+1);changed=true}
+    }
+  });
+  if(changed)refreshView();
+}
+
 function render(data){
   var info=data.info||{};
   document.getElementById('shopName').textContent=info.name||'Автосервис';
@@ -140,20 +156,22 @@ function render(data){
   if(info.phone)infoHtml+='</div><div class="info" style="border-top:1px solid var(--line)"><svg viewBox="0 0 24 24"><path d="M4 5c0 8 7 15 15 15l3-4-6-2-2 2c-3-1-6-4-7-7l2-2-2-6z"/></svg><div><b>Телефон</b><br><a href="tel:'+esc(info.phone)+'" style="color:var(--blue);text-decoration:none">'+esc(info.phone)+'</a></div>';
   document.getElementById('infoBlock').innerHTML=infoHtml||'<div>Добро пожаловать! Запишитесь ниже.</div>';
 
-  var q=data.queue||[];
+  var feed=data.feed||[];
   var qEl=document.getElementById('qList');
-  document.getElementById('qCount').textContent=q.length?('всего: '+q.length):'';
+  document.getElementById('qCount').textContent=feed.length?('всего: '+feed.length):'';
   var lbl={wait:'Ждёт',work:'В работе',done:'Готово'},cl={wait:'',work:'work',done:'done'},pl={wait:'p-wait',work:'p-work',done:'p-done'};
-  if(!q.length){qEl.innerHTML='<div class="empty">Пока никто не записан — вы можете быть первым</div>'}
+  if(!feed.length){qEl.innerHTML='<div class="empty">Пока никто не записан — вы можете быть первым</div>'}
   else{
-    qEl.innerHTML=q.map(function(c,i){
+    qEl.innerHTML=feed.map(function(c){
       var s=c.status||'wait';
-      return '<div class="row"><div class="n '+cl[s]+'">'+(i+1)+'</div>'+
-        '<div style="flex:1"><div class="nm">'+esc(c.name)+(c.time?' <span style="font-weight:400;color:var(--ink-2);font-size:13px">· '+esc(c.time)+'</span>':'')+'</div></div>'+
+      var title=(c.car||'Авто')+(c.what?' · '+c.what:'');
+      return '<div class="row"><div class="n '+cl[s]+'">··'+esc(c.last2||'--')+'</div>'+
+        '<div style="flex:1"><div class="nm">'+esc(title)+'</div>'+
+        '<div style="font-size:12px;color:var(--ink-2);margin-top:1px">'+ruDate(c.date)+'</div></div>'+
         '<span class="pill '+pl[s]+'">'+lbl[s]+'</span></div>';
     }).join('');
   }
-  document.getElementById('refreshTxt').textContent='обновляется автоматически';
+  checkMyBooking(feed);
 }
 
 function loadToday(){
