@@ -3,22 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Электронная очередь</title>
+<title>Электронная запись</title>
 <style>
 :root{--ink:#101820;--ink-2:#4A5964;--paper:#E8ECEF;--card:#fff;--line:#D4DBE0;
 --blue:#17549E;--blue-bg:#E4EDF9;--amber:#B9740A;--amber-bg:#FCEFD8;
---green:#1B7048;--green-bg:#DDF0E6;--r:12px}
+--green:#1B7048;--green-bg:#DDF0E6;--r:14px}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
-.wrap{max-width:520px;margin:0 auto;padding:20px 16px 40px}
-h1{font-size:21px;margin-bottom:2px}
-.sub{color:var(--ink-2);font-size:14px;margin-bottom:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px;overflow:hidden}
-.pad{padding:16px}
-.hd{padding:12px 16px;font-size:13px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.wrap{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:22px;margin-bottom:2px}
+.sub{color:var(--ink-2);font-size:14px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:16px;overflow:hidden}
+.pad{padding:18px}
+.hd{padding:13px 16px;font-size:13px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
 .row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
 .row:last-child{border-bottom:none}
-.n{width:34px;height:34px;border-radius:9px;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex:0 0 34px}
+.n{width:32px;height:32px;border-radius:9px;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex:0 0 32px}
 .n.work{background:var(--amber-bg);color:var(--amber)}
 .n.done{background:var(--green-bg);color:var(--green)}
 .nm{font-weight:700;font-size:15px}
@@ -26,39 +26,21 @@ h1{font-size:21px;margin-bottom:2px}
 .p-wait{background:var(--blue-bg);color:var(--blue)}
 .p-work{background:var(--amber-bg);color:var(--amber)}
 .p-done{background:var(--green-bg);color:var(--green)}
-.empty{padding:26px 16px;text-align:center;color:var(--ink-2);font-size:14px}
+.empty{padding:22px 16px;text-align:center;color:var(--ink-2);font-size:14px}
 .info{display:flex;gap:10px;align-items:flex-start;font-size:14px;padding:14px 16px}
 .info svg{flex:0 0 20px;margin-top:2px;stroke:var(--blue);fill:none;stroke-width:1.8}
 label{display:block;font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:5px}
-input,textarea{width:100%;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px}
+input,textarea{width:100%;font:inherit;font-size:16px;padding:12px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:13px;background:var(--card)}
 input:focus,textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:var(--blue)}
-button{width:100%;font:inherit;font-size:16px;font-weight:700;padding:13px;border-radius:10px;border:none;background:var(--blue);color:#fff;cursor:pointer}
+button{width:100%;font:inherit;font-size:17px;font-weight:700;padding:14px;border-radius:11px;border:none;background:var(--blue);color:#fff;cursor:pointer}
 button:disabled{opacity:.5}
+.linkbtn{background:none;color:var(--blue);font-weight:700;font-size:14px;text-decoration:underline;padding:8px;width:auto}
 .err{color:#B02A2A;font-size:13px;margin-bottom:10px;display:none}
-.done{display:none;text-align:center;padding:20px 4px}
-.done .num{width:72px;height:72px;border-radius:50%;background:var(--green-bg);color:var(--green);font-size:30px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
-.done h2{font-size:18px;margin-bottom:6px}
-.done p{color:var(--ink-2);font-size:14px;margin-bottom:4px}
-.done .lnk{display:inline-block;margin-top:14px;color:var(--blue);font-weight:700;font-size:14px;cursor:pointer;text-decoration:underline}
-.refresh{font-size:12px;color:var(--ink-2);text-align:center;margin-top:6px}
-.calhd{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
-.calhd b{font-size:14px;text-transform:capitalize}
-.calhd button{width:auto;padding:5px 10px;font-size:13px;background:var(--paper);color:var(--ink);font-weight:700}
-.calwd{display:grid;grid-template-columns:repeat(7,1fr);padding:8px 8px 0;font-size:11px;color:var(--ink-3);text-align:center;font-weight:700}
-.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:6px 8px 12px}
-.calcell{aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;font-weight:700;position:relative;cursor:pointer;background:var(--paper);color:var(--ink-3)}
-.calcell.avail{background:var(--card);color:var(--ink);border:1px solid var(--line)}
-.calcell.today{box-shadow:inset 0 0 0 2px var(--blue)}
-.calcell.on{background:var(--blue);border-color:var(--blue);color:#fff}
-.calcell.empty{visibility:hidden;cursor:default}
-.calcell .dot{width:5px;height:5px;border-radius:50%;margin-top:2px;background:var(--ink-3)}
-.calcell.avail .dot.free{background:var(--green)}
-.calcell.avail .dot.mid{background:var(--amber)}
-.calcell.avail .dot.busy{background:#B02A2A}
-.calcell.on .dot{background:#fff!important}
-.callegend{display:flex;gap:14px;padding:0 14px 12px;font-size:11px;color:var(--ink-2)}
-.callegend span{display:inline-flex;align-items:center;gap:4px}
-.callegend i{width:6px;height:6px;border-radius:50%;display:inline-block}
+.done{text-align:center;padding:8px 4px}
+.done .num{width:76px;height:76px;border-radius:50%;background:var(--green-bg);color:var(--green);font-size:32px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.done h2{font-size:19px;margin-bottom:6px}
+.done p{color:var(--ink-2);font-size:14px;margin-bottom:14px}
+.refresh{font-size:12px;color:var(--ink-2);text-align:center;margin-top:-8px;margin-bottom:16px}
 </style>
 </head>
 <body>
@@ -71,170 +53,98 @@ button:disabled{opacity:.5}
   </div>
 
   <div class="card">
-    <div class="calhd"><b id="calMonth">Выбор дня</b>
-      <div style="display:flex;gap:6px">
-        <button onclick="calShift(-7)">‹</button>
-        <button onclick="calToday()">Сегодня</button>
-        <button onclick="calShift(7)">›</button>
-      </div>
-    </div>
-    <div class="calwd"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
-    <div class="calgrid" id="calGrid"></div>
-    <div class="callegend">
-      <span><i style="background:var(--green)"></i>свободно</span>
-      <span><i style="background:var(--amber)"></i>есть запись</span>
-      <span><i style="background:#B02A2A"></i>плотно</span>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="hd"><span id="qTitle">Очередь</span><span id="qCount"></span></div>
+    <div class="hd"><span>Очередь сегодня</span><span id="qCount"></span></div>
     <div id="qList"></div>
   </div>
   <div class="refresh" id="refreshTxt"></div>
 
-  <div class="card" style="margin-top:18px" id="form-card">
+  <div class="card" id="form-card">
     <div class="pad">
-      <label style="font-size:16px;margin-bottom:10px" id="formTitle">Хотите записаться?</label>
+      <label style="font-size:16px;margin-bottom:12px">Записаться</label>
       <div class="err" id="err"></div>
       <input id="name" placeholder="Ваше имя">
       <input id="phone" type="tel" placeholder="Телефон">
-      <input id="car" placeholder="Марка авто">
-      <input id="plate" placeholder="Гос. номер (если знаете)">
-      <textarea id="what" rows="2" placeholder="Что случилось"></textarea>
-      <button id="submitBtn" onclick="submitForm()">Встать в очередь</button>
+      <input id="car" placeholder="Марка авто (необязательно)">
+      <textarea id="what" rows="2" placeholder="Что случилось (необязательно)"></textarea>
+      <label>Когда</label>
+      <input id="bdate" type="date">
+      <button id="submitBtn" onclick="submitForm()">Записаться</button>
     </div>
   </div>
 
-  <div class="card done" id="done">
-    <div class="pad">
+  <div class="card" id="done-card" style="display:none">
+    <div class="pad done">
       <div class="num" id="posNum">—</div>
       <h2 id="doneH2">Вы записаны</h2>
-      <p id="doneTxt">Ваша позиция в очереди на выбранный день</p>
-      <span class="lnk" onclick="anotherDay()">Записаться на другой день</span>
+      <p id="doneTxt">Ваша позиция в очереди</p>
+      <button class="linkbtn" onclick="showForm()" id="againBtn">Записать ещё одного</button>
     </div>
   </div>
 </div>
 
 <script>
 var BASE_URL = 'https://script.google.com/macros/s/AKfycbyW17fICbE-GjMS_jMk9OaAVlONZEuKCWqsFUKB86emJzqq1WEtpUuEqTT15waLVGiAHQ/exec';
-var LKEY = 'client_bookings_v1';
-var selDate = null;
-var lastDays = {};      // date -> count
-var maxDate = null;     // дальше этой даты записи нет (сервер отдаёт данные только на месяц вперёд)
-var calBase = new Date(); // с какой недели начинается видимая сетка
+var LKEY = 'client_bookings_v2';
+var DEVICE_CAP = 3;
 var submitting = false;
 
 function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})}
 function iso(d){var x=d||new Date();return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 function uid(){return 'c'+Date.now()+Math.floor(Math.random()*900+100)}
 var MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-function ruShort(ds){
-  var d=new Date(ds+'T00:00:00'),wd=['вс','пн','вт','ср','чт','пт','сб'][d.getDay()];
-  return {num:d.getDate()+' '+MONTHS[d.getMonth()],wd:wd};
-}
-function dayLabel(ds){
+function ruDate(ds){
   var t=iso(),tm=iso(new Date(Date.now()+864e5));
   if(ds===t)return 'сегодня';
   if(ds===tm)return 'завтра';
-  var r=ruShort(ds);return r.wd+', '+r.num;
+  var d=new Date(ds+'T00:00:00');
+  return d.getDate()+' '+MONTHS[d.getMonth()];
 }
 
-function myBookings(){
-  try{return JSON.parse(localStorage.getItem(LKEY)||'[]')}catch(e){return []}
-}
-function saveAll(arr){
-  try{localStorage.setItem(LKEY,JSON.stringify(arr))}catch(e){}
-}
-function findBooking(date){
-  return myBookings().find(function(b){return b.date===date});
-}
-// Записывает/обновляет бронь. Если oldDate указан — это перенос существующей (не расходует лимит устройства).
-function upsertLocalBooking(oldDate,newDate,id,pos){
-  var arr=myBookings();
+function myBookings(){try{return JSON.parse(localStorage.getItem(LKEY)||'[]')}catch(e){return []}}
+function saveAll(a){try{localStorage.setItem(LKEY,JSON.stringify(a))}catch(e){}}
+function lastBooking(){var a=myBookings();return a.length?a[a.length-1]:null}
+function upsertBooking(oldDate,date,id,pos){
+  var a=myBookings();
   if(oldDate){
-    var idx=arr.findIndex(function(b){return b.date===oldDate});
-    if(idx>=0){arr[idx]={date:newDate,id:id,pos:pos};saveAll(arr);return}
+    var i=a.findIndex(function(b){return b.date===oldDate});
+    if(i>=0){a[i]={date:date,id:id,pos:pos};saveAll(a);return}
   }
-  arr.push({date:newDate,id:id,pos:pos});saveAll(arr);
+  a.push({date:date,id:id,pos:pos});saveAll(a);
 }
-function clearBooking(date){
-  saveAll(myBookings().filter(function(b){return b.date!==date}));
-}
-var DEVICE_CAP=3;
+function removeBooking(date){saveAll(myBookings().filter(function(b){return b.date!==date}))}
 
-/* ---------- КАЛЕНДАРЬ ---------- */
-function mondayOf(d){
-  var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());
-  var wd=(x.getDay()+6)%7; // 0=пн
-  x.setDate(x.getDate()-wd);
-  return x;
+function showDone(b){
+  document.getElementById('form-card').style.display='none';
+  document.getElementById('done-card').style.display='block';
+  document.getElementById('posNum').textContent=(b.pos&&b.pos!=='…')?b.pos:'—';
+  document.getElementById('doneH2').textContent=b.pos==='…'?'Записываем…':'Вы записаны';
+  document.getElementById('doneTxt').textContent='Ваша позиция в очереди на '+ruDate(b.date);
+  document.getElementById('againBtn').style.display=myBookings().length<DEVICE_CAP?'block':'none';
 }
-function calShift(days){
-  calBase=new Date(calBase.getTime()+days*864e5);renderCal();
-}
-function calToday(){calBase=new Date();renderCal()}
-
-function renderCal(){
-  var start=mondayOf(calBase);
-  var today=iso();
-  var cells=[],d=new Date(start);
-  for(var i=0;i<28;i++){ // 4 недели видно за раз — достаточно для месяца вперёд
-    cells.push(new Date(d));
-    d.setDate(d.getDate()+1);
-  }
-  var firstDs=iso(cells[0]),lastDs=iso(cells[cells.length-1]);
-  document.getElementById('calMonth').textContent=ruShort(iso(cells[7])).num.replace(/^\d+\s/,'');
-
-  var html='';
-  cells.forEach(function(cd){
-    var ds=iso(cd);
-    var avail=ds>=today;
-    var cls='calcell'+(avail?' avail':'')+(ds===today?' today':'')+(ds===selDate?' on':'');
-    var cnt=lastDays[ds]||0;
-    var dotCls=cnt===0?'free':cnt<4?'mid':'busy';
-    html+='<div class="'+cls+'"'+(avail?' onclick="pickDay(\''+ds+'\')"':'')+'>'+cd.getDate()+
-      (avail?'<div class="dot '+dotCls+'"></div>':'')+'</div>';
-  });
-  document.getElementById('calGrid').innerHTML=html;
-}
-
-function pickDay(d){
-  selDate=d;renderCal();load();updateFormState();
-}
-function anotherDay(){
-  document.getElementById('done').style.display='none';
+function showForm(){
   document.getElementById('form-card').style.display='block';
-  var dates=Object.keys(lastDays).sort();
-  var next=dates.find(function(ds){return ds>=iso()&&!findBooking(ds)});
-  if(next)pickDay(next);
+  document.getElementById('done-card').style.display='none';
+  document.getElementById('err').style.display='none';
+}
+function refreshView(){
+  var b=lastBooking();
+  if(b)showDone(b);else showForm();
 }
 
-/* ---------- ОЧЕРЕДЬ И ФОРМА ---------- */
 function render(data){
   var info=data.info||{};
   document.getElementById('shopName').textContent=info.name||'Автосервис';
   document.getElementById('shopSub').textContent=info.hours?('работаем: '+info.hours):'электронная очередь';
   var infoHtml='';
-  if(info.hours) infoHtml+='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><b>Часы работы</b><br>'+esc(info.hours)+'</div>';
-  if(info.phone) infoHtml+='</div><div class="info" style="border-top:1px solid var(--line)"><svg viewBox="0 0 24 24"><path d="M4 5c0 8 7 15 15 15l3-4-6-2-2 2c-3-1-6-4-7-7l2-2-2-6z"/></svg><div><b>Телефон</b><br><a href="tel:'+esc(info.phone)+'" style="color:var(--blue);text-decoration:none">'+esc(info.phone)+'</a></div>';
+  if(info.hours)infoHtml+='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><b>Часы работы</b><br>'+esc(info.hours)+'</div>';
+  if(info.phone)infoHtml+='</div><div class="info" style="border-top:1px solid var(--line)"><svg viewBox="0 0 24 24"><path d="M4 5c0 8 7 15 15 15l3-4-6-2-2 2c-3-1-6-4-7-7l2-2-2-6z"/></svg><div><b>Телефон</b><br><a href="tel:'+esc(info.phone)+'" style="color:var(--blue);text-decoration:none">'+esc(info.phone)+'</a></div>';
   document.getElementById('infoBlock').innerHTML=infoHtml||'<div>Добро пожаловать! Запишитесь ниже.</div>';
-
-  if(data.days&&data.days.length){
-    lastDays={};
-    data.days.forEach(function(x){lastDays[x.date]=x.count});
-    maxDate=data.days[data.days.length-1].date;
-  }
-  if(!selDate)selDate=data.day||iso();
-  renderCal();
-
-  document.getElementById('qTitle').textContent='Очередь на '+dayLabel(selDate);
 
   var q=data.queue||[];
   var qEl=document.getElementById('qList');
   document.getElementById('qCount').textContent=q.length?('всего: '+q.length):'';
   var lbl={wait:'Ждёт',work:'В работе',done:'Готово'},cl={wait:'',work:'work',done:'done'},pl={wait:'p-wait',work:'p-work',done:'p-done'};
-  if(!q.length){qEl.innerHTML='<div class="empty">На этот день пока никто не записан</div>'}
+  if(!q.length){qEl.innerHTML='<div class="empty">Пока никто не записан — вы можете быть первым</div>'}
   else{
     qEl.innerHTML=q.map(function(c,i){
       var s=c.status||'wait';
@@ -244,46 +154,27 @@ function render(data){
     }).join('');
   }
   document.getElementById('refreshTxt').textContent='обновляется автоматически';
-
-  // Если для этого дня уже есть своя запись, но её позиция ещё неизвестна (пришли сюда после
-  // подтверждения переноса или просмотра чужого конфликта) — найдём её по id в списке очереди.
-  var mine=findBooking(selDate);
-  if(mine&&(mine.pos==null||mine.pos==='…')){
-    for(var k=0;k<q.length;k++){if(q[k].id===mine.id){upsertLocalBooking(null,selDate,mine.id,k+1);break}}
-  }
-  updateFormState();
 }
 
-function updateFormState(){
-  var b=findBooking(selDate);
-  if(b){
-    document.getElementById('form-card').style.display='none';
-    document.getElementById('done').style.display='block';
-    document.getElementById('posNum').textContent=(b.pos&&b.pos!=='…')?b.pos:'—';
-    document.getElementById('doneH2').textContent=b.pos==='…'?'Записываем…':'Вы записаны';
-    document.getElementById('doneTxt').textContent='Ваша позиция в очереди на '+dayLabel(selDate);
-  } else {
-    document.getElementById('form-card').style.display='block';
-    document.getElementById('done').style.display='none';
-    document.getElementById('formTitle').textContent='Записаться на '+dayLabel(selDate);
-  }
-}
-
-function load(){
+function loadToday(){
   if(!BASE_URL||BASE_URL.indexOf('exec')<0){
     document.getElementById('qList').innerHTML='<div class="empty">Страница не подключена к базе</div>';return;
   }
-  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,date:selDate})})
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true})})
     .then(function(r){return r.json()})
     .then(function(res){if(res&&res.ok)render(res)})
     .catch(function(){});
 }
-load();setInterval(load,15000);
+loadToday();setInterval(loadToday,15000);
+document.getElementById('bdate').value=iso();
+document.getElementById('bdate').min=iso();
+refreshView();
 
 function submitForm(){
-  if(submitting)return; // защита от повторного нажатия, пока идёт отправка
+  if(submitting)return;
   var name=document.getElementById('name').value.trim();
   var phone=document.getElementById('phone').value.trim();
+  var day=document.getElementById('bdate').value||iso();
   var err=document.getElementById('err');
   if(!name||!phone){err.textContent='Заполните имя и телефон.';err.style.display='block';return}
   if(!BASE_URL||BASE_URL.indexOf('exec')<0){err.textContent='Запись временно недоступна.';err.style.display='block';return}
@@ -293,10 +184,9 @@ function submitForm(){
   }
   err.style.display='none';
 
-  var id=uid(),day=selDate||iso();
+  var id=uid();
   var rec={id:id,name:name,phone:phone,car:document.getElementById('car').value.trim(),
-    plate:document.getElementById('plate').value.trim().toUpperCase(),
-    date:day,time:'',what:document.getElementById('what').value.trim(),
+    plate:'',date:day,time:'',what:document.getElementById('what').value.trim(),
     status:'wait',ord:Date.now(),updated:Date.now(),deleted:0};
 
   doSubmit(rec,day,id,false);
@@ -305,11 +195,11 @@ function submitForm(){
 function doSubmit(rec,day,id,confirmMove){
   submitting=true;
   var err=document.getElementById('err');
+  var btn=document.getElementById('submitBtn');
+  if(btn){btn.disabled=true;btn.textContent='Записываем…'}
   if(!confirmMove){
-    // Мгновенно, ещё до ответа сервера, прячем форму — без этого за пару секунд ожидания
-    // можно было успеть отправить форму второй раз.
-    upsertLocalBooking(null,day,id,'…');
-    updateFormState();
+    upsertBooking(null,day,id,'…');
+    showDone({date:day,pos:'…'});
   }
   var body={board:true,date:day,queue:[Object.assign({},rec,{confirmMove:!!confirmMove})]};
 
@@ -318,44 +208,53 @@ function doSubmit(rec,day,id,confirmMove){
     .then(function(res){
       if(!res||!res.ok)throw new Error('fail');
 
-      // Конфликт: у этого номера уже есть активная запись на другой день.
       if(res.conflicts&&res.conflicts[id]){
-        if(!confirmMove)clearBooking(day);
+        if(!confirmMove)removeBooking(day);
         submitting=false;
+        if(btn){btn.disabled=false;btn.textContent='Записаться'}
         var conf=res.conflicts[id],oldDay=conf.date;
-        upsertLocalBooking(null,oldDay,conf.id,null);
-        var ok=confirm('У вас уже есть запись на '+dayLabel(oldDay)+'. Перенести её на '+dayLabel(day)+'?');
-        if(ok){
-          doSubmit(rec,day,id,true);
-        } else {
-          pickDay(oldDay);
-        }
+        upsertBooking(null,oldDay,conf.id,null);
+        var ok=confirm('У вас уже есть запись на '+ruDate(oldDay)+'. Перенести её на '+ruDate(day)+'?');
+        if(ok){doSubmit(rec,day,id,true)}
+        else{showDone({date:oldDay,pos:null});fetchPosFor(oldDay,conf.id)}
         return;
       }
 
-      var q=(res.queue||[]);
+      var q=res.queue||[];
       var realId=(res.idMap&&res.idMap[id])?res.idMap[id]:id;
       var pos=q.length;
       for(var i=0;i<q.length;i++){if(q[i].id===realId){pos=i+1;break}}
       if(confirmMove){
-        // существующая запись переехала с другого дня — обновляем локально по старой дате
         var moved=myBookings().find(function(b){return b.id===realId});
-        upsertLocalBooking(moved?moved.date:null,day,realId,pos);
+        upsertBooking(moved?moved.date:null,day,realId,pos);
       } else {
-        upsertLocalBooking(null,day,realId,pos);
+        upsertBooking(null,day,realId,pos);
       }
-      document.getElementById('name').value='';document.getElementById('phone').value='';
-      document.getElementById('car').value='';document.getElementById('plate').value='';document.getElementById('what').value='';
       submitting=false;
-      updateFormState();
-      load();
+      if(btn){btn.disabled=false;btn.textContent='Записаться'}
+      document.getElementById('name').value='';document.getElementById('phone').value='';
+      document.getElementById('car').value='';document.getElementById('what').value='';
+      showDone({date:day,pos:pos});
+      loadToday();
     })
     .catch(function(){
-      if(!confirmMove)clearBooking(day);
+      if(!confirmMove)removeBooking(day);
       submitting=false;
-      updateFormState();
+      if(btn){btn.disabled=false;btn.textContent='Записаться'}
+      showForm();
       err.textContent='Не удалось отправить. Проверьте связь и попробуйте ещё раз.';err.style.display='block';
     });
+}
+
+function fetchPosFor(day,id){
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,date:day})})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      if(!res||!res.ok)return;
+      var q=res.queue||[],pos=null;
+      for(var i=0;i<q.length;i++){if(q[i].id===id){pos=i+1;break}}
+      if(pos){upsertBooking(day,day,id,pos);showDone({date:day,pos:pos})}
+    }).catch(function(){});
 }
 </script>
 </body>
