@@ -77,6 +77,14 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
 .wl .x{border:none;background:none;color:var(--red);font-size:19px;cursor:pointer;padding:0}
 .sum{text-align:right;font-weight:700;font-size:16px;padding-top:6px;border-top:2px solid var(--ink);margin-top:8px}
 .chip{display:inline-block;font-size:12px;padding:5px 10px;border:1px solid var(--line);border-radius:20px;margin:0 4px 5px 0;cursor:pointer;background:var(--card)}
+.dchip{flex:0 0 auto;min-width:58px;text-align:center;padding:8px 5px;border-radius:9px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.dchip.on{background:var(--blue);border-color:var(--blue)}
+.dchip.on *{color:#fff}
+.dchip .dn{font-weight:700;font-size:13px}
+.dchip .dl{font-size:10px;color:var(--ink-2);margin-top:1px}
+.dchip .dc{font-size:10px;font-weight:700;margin-top:2px;color:var(--ink-3)}
+.dchip .dc.has{color:var(--blue)}
+.dchip.on .dc.has{color:#E4EDF9}
 .dnav{display:flex;align-items:center;gap:6px;flex:1}
 .dnav input{width:auto;flex:1;padding:7px 9px;font-size:14px}
 .hist{background:var(--paper);border-radius:8px;padding:9px 10px;margin-bottom:6px;font-size:13px}
@@ -152,6 +160,7 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
       </div>
       <button class="b pri" onclick="openRec()">+ Записать</button>
     </div>
+    <div id="daysStrip" style="display:flex;gap:6px;overflow-x:auto;padding:2px 2px 10px;-webkit-overflow-scrolling:touch"></div>
     <div class="card" id="qList"></div>
     <div class="stats" id="qStats"></div>
   </div>
@@ -488,7 +497,26 @@ function dayList(){
   var d=document.getElementById('qDate').value;
   return live(D.queue).filter(function(c){return dOnly(c.date)===d}).sort(function(a,b){return (a.ord||0)-(b.ord||0)});
 }
+function ruShort(ds){
+  var d=new Date(ds+'T00:00:00'),wd=['вс','пн','вт','ср','чт','пт','сб'][d.getDay()];
+  return {num:d.getDate()+'.'+('0'+(d.getMonth()+1)).slice(-2),wd:wd};
+}
+function renderDaysStrip(){
+  var cur=document.getElementById('qDate').value||iso();
+  var el=document.getElementById('daysStrip'),html='',base=new Date();
+  for(var i=0;i<8;i++){
+    var d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i);
+    var ds=iso(d);
+    var cnt=live(D.queue).filter(function(c){return dOnly(c.date)===ds&&c.status!=='done'}).length;
+    var r=ruShort(ds),lbl=ds===iso()?'Сегодня':ds===iso(new Date(Date.now()+864e5))?'Завтра':r.wd;
+    html+='<div class="dchip'+(ds===cur?' on':'')+'" onclick="document.getElementById(\'qDate\').value=\''+ds+'\';renderQueue()">'+
+      '<div class="dn">'+lbl+'</div><div class="dl">'+r.num+'</div>'+
+      '<div class="dc'+(cnt?' has':'')+'">'+(cnt?cnt+' авто':'—')+'</div></div>';
+  }
+  el.innerHTML=html;
+}
 function renderQueue(){
+  renderDaysStrip();
   var L=dayList(),el=document.getElementById('qList'),st=document.getElementById('qStats');
   var lbl={wait:'Ждёт',work:'В работе',done:'Готово'},cl={wait:'',work:'w',done:'d'},pl={wait:'p-w',work:'p-r',done:'p-d'};
   if(!L.length){el.innerHTML='<div class="empty">На этот день записей нет.</div>';st.innerHTML='';return}
