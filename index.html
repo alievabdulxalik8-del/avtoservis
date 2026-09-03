@@ -18,7 +18,8 @@ h1{font-size:22px;margin-bottom:2px}
 .hd{padding:13px 16px;font-size:13px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
 .row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
 .row:last-child{border-bottom:none}
-.n{width:32px;height:32px;border-radius:9px;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex:0 0 32px}
+.row.mine{background:var(--blue-bg)}
+.n{width:34px;height:34px;border-radius:9px;background:var(--paper);color:var(--ink-2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex:0 0 34px}
 .n.work{background:var(--amber-bg);color:var(--amber)}
 .n.done{background:var(--green-bg);color:var(--green)}
 .nm{font-weight:700;font-size:15px}
@@ -40,7 +41,7 @@ button:disabled{opacity:.5}
 .done .num{width:76px;height:76px;border-radius:50%;background:var(--green-bg);color:var(--green);font-size:32px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
 .done h2{font-size:19px;margin-bottom:6px}
 .done p{color:var(--ink-2);font-size:14px;margin-bottom:14px}
-.refresh{font-size:12px;color:var(--ink-2);text-align:center;margin-top:-8px;margin-bottom:16px}
+.refresh{font-size:12px;color:var(--ink-2);text-align:center;margin:-10px 0 16px;line-height:1.4}
 </style>
 </head>
 <body>
@@ -56,7 +57,7 @@ button:disabled{opacity:.5}
     <div class="hd"><span>Кто сейчас в записи</span><span id="qCount"></span></div>
     <div id="qList"></div>
   </div>
-  <div class="refresh" id="refreshTxt">видно машину, проблему, дату и последние 2 цифры телефона — так вы найдёте себя, не видя чужих данных</div>
+  <div class="refresh">видно машину, проблему, дату и последние 2 цифры телефона — так вы найдёте себя, не видя чужих данных. Обновляется само.</div>
 
   <div class="card" id="form-card">
     <div class="pad">
@@ -83,10 +84,11 @@ button:disabled{opacity:.5}
 </div>
 
 <script>
-var BASE_URL = 'https://script.google.com/macros/s/AKfycbyW17fICbE-GjMS_jMk9OaAVlONZEuKCWqsFUKB86emJzqq1WEtpUuEqTT15waLVGiAHQ/exec';
-var LKEY = 'client_bookings_v2';
-var DEVICE_CAP = 3;
+var BASE_URL = 'https://script.google.com/macros/s/AKfycbxQJJedFF8i_WMealF1McGd05djkOw04dxSvQvXNpvz1tiYma37dVwqR2a_20WuX3CJsQ/exec';
+var LKEY = 'client_bookings_v3';   // {date, id}[] — без кэша позиции, она всегда считается заново
+var DEVICE_CAP = 3;                // сколько активных (незавершённых) записей можно держать с одного устройства одновременно
 var submitting = false;
+var lastFeed = [];
 
 function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})}
 function iso(d){var x=d||new Date();return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
@@ -100,25 +102,30 @@ function ruDate(ds){
   return d.getDate()+' '+MONTHS[d.getMonth()];
 }
 
+/* ---------- локальное хранилище: только {date,id}, без позиции ---------- */
 function myBookings(){try{return JSON.parse(localStorage.getItem(LKEY)||'[]')}catch(e){return []}}
 function saveAll(a){try{localStorage.setItem(LKEY,JSON.stringify(a))}catch(e){}}
-function lastBooking(){var a=myBookings();return a.length?a[a.length-1]:null}
-function upsertBooking(oldDate,date,id,pos){
-  var a=myBookings();
-  if(oldDate){
-    var i=a.findIndex(function(b){return b.date===oldDate});
-    if(i>=0){a[i]={date:date,id:id,pos:pos};saveAll(a);return}
-  }
-  a.push({date:date,id:id,pos:pos});saveAll(a);
-}
+function addBooking(date,id){var a=myBookings();a.push({date:date,id:id});saveAll(a)}
 function removeBooking(date){saveAll(myBookings().filter(function(b){return b.date!==date}))}
+function moveBooking(oldDate,newDate,newId){
+  var a=myBookings(),i=a.findIndex(function(b){return b.date===oldDate});
+  if(i>=0){a[i]={date:newDate,id:newId};saveAll(a)}else{a.push({date:newDate,id:newId});saveAll(a)}
+}
 
-function showDone(b){
+/* Позиция всегда считается заново по свежей ленте — никогда не хранится и не «залипает». */
+function posInFeed(date,id,feed){
+  var sameDay=feed.filter(function(x){return x.date===date;});
+  var idx=sameDay.findIndex(function(x){return x.id===id;});
+  return idx>=0?idx+1:null;
+}
+
+function showDone(date,id,feed){
   document.getElementById('form-card').style.display='none';
   document.getElementById('done-card').style.display='block';
-  document.getElementById('posNum').textContent=(b.pos&&b.pos!=='…')?b.pos:'—';
-  document.getElementById('doneH2').textContent=b.pos==='…'?'Записываем…':'Вы записаны';
-  document.getElementById('doneTxt').textContent='Ваша позиция в очереди на '+ruDate(b.date);
+  var pos=posInFeed(date,id,feed);
+  document.getElementById('posNum').textContent=pos||'—';
+  document.getElementById('doneH2').textContent=pos?'Вы записаны':'Записываем…';
+  document.getElementById('doneTxt').textContent='Ваша позиция в очереди на '+ruDate(date);
   document.getElementById('againBtn').style.display=myBookings().length<DEVICE_CAP?'block':'none';
 }
 function showForm(){
@@ -126,27 +133,25 @@ function showForm(){
   document.getElementById('done-card').style.display='none';
   document.getElementById('err').style.display='none';
 }
-function refreshView(){
-  var b=lastBooking();
-  if(b)showDone(b);else showForm();
-}
 
-/** Сверяем каждую свою запись с живой лентой. Если её там больше нет — значит мастер
- *  закрыл работу («Готово») или запись удалили — освобождаем слот для новой записи. */
-function checkMyBooking(feed){
+/* Сверяем каждую свою запись с живой лентой. Нет в ленте — значит мастер закрыл работу
+ * («Готово») или запись удалили — освобождаем слот сами, ничего вручную чистить не нужно. */
+function reconcile(feed){
   var mine=myBookings(),changed=false;
   mine.forEach(function(b){
     var stillActive=feed.some(function(x){return x.id===b.id;});
     if(!stillActive){removeBooking(b.date);changed=true}
-    else{
-      var sameDay=feed.filter(function(x){return x.date===b.date;});
-      var idx=sameDay.findIndex(function(x){return x.id===b.id;});
-      if(idx>=0&&idx+1!==b.pos){upsertBooking(b.date,b.date,b.id,idx+1);changed=true}
-    }
   });
-  if(changed)refreshView();
+  var left=myBookings();
+  if(left.length){
+    var last=left[left.length-1];
+    showDone(last.date,last.id,feed);
+  } else {
+    showForm();
+  }
 }
 
+/* ---------- лента и форма ---------- */
 function render(data){
   var info=data.info||{};
   document.getElementById('shopName').textContent=info.name||'Автосервис';
@@ -157,24 +162,26 @@ function render(data){
   document.getElementById('infoBlock').innerHTML=infoHtml||'<div>Добро пожаловать! Запишитесь ниже.</div>';
 
   var feed=data.feed||[];
+  lastFeed=feed;
+  var mineIds=myBookings().map(function(b){return b.id;});
   var qEl=document.getElementById('qList');
   document.getElementById('qCount').textContent=feed.length?('всего: '+feed.length):'';
   var lbl={wait:'Ждёт',work:'В работе',done:'Готово'},cl={wait:'',work:'work',done:'done'},pl={wait:'p-wait',work:'p-work',done:'p-done'};
   if(!feed.length){qEl.innerHTML='<div class="empty">Пока никто не записан — вы можете быть первым</div>'}
   else{
     qEl.innerHTML=feed.map(function(c){
-      var s=c.status||'wait';
+      var s=c.status||'wait',mine=mineIds.indexOf(c.id)>=0;
       var title=(c.car||'Авто')+(c.what?' · '+c.what:'');
-      return '<div class="row"><div class="n '+cl[s]+'">··'+esc(c.last2||'--')+'</div>'+
-        '<div style="flex:1"><div class="nm">'+esc(title)+'</div>'+
+      return '<div class="row'+(mine?' mine':'')+'"><div class="n '+cl[s]+'">··'+esc(c.last2||'--')+'</div>'+
+        '<div style="flex:1"><div class="nm">'+esc(title)+(mine?' <span style="color:var(--blue);font-weight:700">· это вы</span>':'')+'</div>'+
         '<div style="font-size:12px;color:var(--ink-2);margin-top:1px">'+ruDate(c.date)+'</div></div>'+
         '<span class="pill '+pl[s]+'">'+lbl[s]+'</span></div>';
     }).join('');
   }
-  checkMyBooking(feed);
+  reconcile(feed);
 }
 
-function loadToday(){
+function loadFeed(){
   if(!BASE_URL||BASE_URL.indexOf('exec')<0){
     document.getElementById('qList').innerHTML='<div class="empty">Страница не подключена к базе</div>';return;
   }
@@ -183,11 +190,11 @@ function loadToday(){
     .then(function(res){if(res&&res.ok)render(res)})
     .catch(function(){});
 }
-loadToday();setInterval(loadToday,15000);
+loadFeed();setInterval(loadFeed,10000);
 document.getElementById('bdate').value=iso();
 document.getElementById('bdate').min=iso();
-refreshView();
 
+/* ---------- отправка формы ---------- */
 function submitForm(){
   if(submitting)return;
   var name=document.getElementById('name').value.trim();
@@ -197,7 +204,7 @@ function submitForm(){
   if(!name||!phone){err.textContent='Заполните имя и телефон.';err.style.display='block';return}
   if(!BASE_URL||BASE_URL.indexOf('exec')<0){err.textContent='Запись временно недоступна.';err.style.display='block';return}
   if(myBookings().length>=DEVICE_CAP){
-    err.textContent='С этого устройства уже сделано '+DEVICE_CAP+' записи. Для новой — обратитесь в мастерскую напрямую.';
+    err.textContent='С этого устройства уже '+DEVICE_CAP+' активные записи. Дождитесь завершения одной или обратитесь в мастерскую напрямую.';
     err.style.display='block';return;
   }
   err.style.display='none';
@@ -215,65 +222,51 @@ function doSubmit(rec,day,id,confirmMove){
   var err=document.getElementById('err');
   var btn=document.getElementById('submitBtn');
   if(btn){btn.disabled=true;btn.textContent='Записываем…'}
-  if(!confirmMove){
-    upsertBooking(null,day,id,'…');
-    showDone({date:day,pos:'…'});
-  }
+
   var body={board:true,date:day,queue:[Object.assign({},rec,{confirmMove:!!confirmMove})]};
 
   fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
     .then(function(r){return r.json()})
     .then(function(res){
       if(!res||!res.ok)throw new Error('fail');
+      submitting=false;
+      if(btn){btn.disabled=false;btn.textContent='Записаться'}
 
       if(res.conflicts&&res.conflicts[id]){
-        if(!confirmMove)removeBooking(day);
-        submitting=false;
-        if(btn){btn.disabled=false;btn.textContent='Записаться'}
         var conf=res.conflicts[id],oldDay=conf.date;
-        upsertBooking(null,oldDay,conf.id,null);
         var ok=confirm('У вас уже есть запись на '+ruDate(oldDay)+'. Перенести её на '+ruDate(day)+'?');
-        if(ok){doSubmit(rec,day,id,true)}
-        else{showDone({date:oldDay,pos:null});fetchPosFor(oldDay,conf.id)}
-        return;
+        if(ok){doSubmit(rec,day,id,true);return}
+        else{addBooking(oldDay,conf.id);loadFeed();return}
       }
 
-      var q=res.queue||[];
       var realId=(res.idMap&&res.idMap[id])?res.idMap[id]:id;
-      var pos=q.length;
-      for(var i=0;i<q.length;i++){if(q[i].id===realId){pos=i+1;break}}
       if(confirmMove){
-        var moved=myBookings().find(function(b){return b.id===realId});
-        upsertBooking(moved?moved.date:null,day,realId,pos);
+        var mine=myBookings(),prev=mine.find(function(b){return b.id===realId;});
+        moveBooking(prev?prev.date:day,day,realId);
       } else {
-        upsertBooking(null,day,realId,pos);
+        addBooking(day,realId);
       }
-      submitting=false;
-      if(btn){btn.disabled=false;btn.textContent='Записаться'}
       document.getElementById('name').value='';document.getElementById('phone').value='';
       document.getElementById('car').value='';document.getElementById('what').value='';
-      showDone({date:day,pos:pos});
-      loadToday();
+      showDone(day,realId,res.feed||lastFeed);
+      loadFeed();
     })
     .catch(function(){
-      if(!confirmMove)removeBooking(day);
       submitting=false;
       if(btn){btn.disabled=false;btn.textContent='Записаться'}
-      showForm();
       err.textContent='Не удалось отправить. Проверьте связь и попробуйте ещё раз.';err.style.display='block';
     });
 }
 
-function fetchPosFor(day,id){
-  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,date:day})})
-    .then(function(r){return r.json()})
-    .then(function(res){
-      if(!res||!res.ok)return;
-      var q=res.queue||[],pos=null;
-      for(var i=0;i<q.length;i++){if(q[i].id===id){pos=i+1;break}}
-      if(pos){upsertBooking(day,day,id,pos);showDone({date:day,pos:pos})}
-    }).catch(function(){});
-}
+(function initialView(){
+  var mine=myBookings();
+  if(mine.length){
+    var last=mine[mine.length-1];
+    showDone(last.date,last.id,[]); // до прихода настоящих данных — просто «Записываем…», ничего не удаляем
+  } else {
+    showForm();
+  }
+})();
 </script>
 </body>
 </html>
