@@ -213,6 +213,8 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     <div class="bar"><button class="b sm" onclick="go('more')">← Назад</button><h2 style="margin-left:8px">Это устройство</h2></div>
     <div class="card pad">
       <div class="f"><label>Адрес общей базы</label><input id="sUrl" placeholder="https://script.google.com/macros/s/…/exec"></div>
+      <div class="f"><label>Код вашей точки (СТО)</label><input id="sShop" placeholder="akusha"></div>
+      <p style="font-size:12px;color:var(--ink-2);margin:-6px 0 10px">Придумайте короткое слово латиницей или цифрами, одинаковое на всех устройствах этой точки. Другие точки со своим кодом не увидят ваши записи.</p>
       <div class="f"><label>Кто работает на этом устройстве</label><select id="sMe"></select></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="b pri" onclick="saveDevice()">Сохранить</button>
@@ -391,7 +393,7 @@ window.onerror=function(m,s,l){
 };
 
 var KEY='autoqueue_v3';
-var DEPLOY_URL='https://script.google.com/macros/s/AKfycbxm0im8X1Zgkouxru9VTb6cXdeQS892j5O4AXRz3AI4LCjxjFShCyL4IJcXLWMT_7v9Mg/exec';
+var DEPLOY_URL='https://script.google.com/macros/s/AKfycbzJat5sOG28_1h9PKPvlGdryltTxAG2rK49k8pQqbfL4VEsHN1maqhzR36XnObBkak-0Q/exec';
 var D={queue:[],orders:[],masters:[],config:{},cfgUpd:0,cfgDirty:0,device:{},lastSync:0};
 var editRec=null,editOrd=null,editMast=null,page='q',mFilter='',syncing=false,canStore=true;
 
@@ -443,7 +445,7 @@ function load(){
 function migrate(old){
   D.queue=old.queue||[];D.orders=old.orders||[];D.lastSync=0;
   var s=old.settings||{};
-  D.device={url:s.url||'',role:'admin',meId:''};
+  D.device={url:s.url||'',shop:'',role:'admin',meId:''};
   D.config={name:s.name||'',phone:s.phone||'',addr:s.addr||'',war:'',pin:'',
     price:(s.serv||'').split(',').map(function(x){return x.trim()}).filter(Boolean).map(function(n){return {n:n,p:0}})};
   D.cfgUpd=Date.now();D.cfgDirty=1;
@@ -456,6 +458,7 @@ function migrate(old){
 function applyAll(){
   applyShop();applyRole();today();renderMasters();renderOrders();renderBase();renderMore();setSync();
   document.getElementById('sUrl').value=D.device.url||'';
+  document.getElementById('sShop').value=D.device.shop||'';
   fillMeSelect();
 }
 
@@ -465,14 +468,14 @@ function dirtyList(){
     queue:D.queue.filter(function(r){return r.dirty}),
     orders:D.orders.filter(function(r){return r.dirty}),
     masters:D.masters.filter(function(r){return r.dirty}),
-    config:D.cfgDirty?[{id:'config',value:D.config,updated:D.cfgUpd||Date.now(),deleted:0}]:[]
+    config:D.cfgDirty?[{id:D.device.shop,value:D.config,updated:D.cfgUpd||Date.now(),deleted:0}]:[]
   };
 }
 function setSync(state,msg){
   var d=document.querySelector('#syncBox .dot'),t=document.getElementById('syncTxt'),s=document.getElementById('syncSub');
   var p=dirtyList(),wait=p.queue.length+p.orders.length+p.masters.length+p.config.length;
   d.className='dot'+(state==='ok'?' ok':state==='err'?' err':state==='go'?' go':'');
-  if(!D.device.url){t.textContent='база не подключена';s.textContent='Ещё → Это устройство';return}
+  if(!D.device.url||!D.device.shop){t.textContent='точка не подключена';s.textContent='Ещё → Это устройство';return}
   if(state==='go'){t.textContent='обмен…';s.textContent='';return}
   if(state==='err'){t.textContent='нет связи';s.textContent=wait?wait+' ждут отправки':'повторю сам';return}
   t.textContent=state==='ok'?'обновлено '+hhmm():'база подключена';
@@ -483,7 +486,7 @@ function merge(arr,inc){
   if(!inc||!inc.length)return 0;
   var n=0;
   for(var i=0;i<inc.length;i++){
-    var r=inc[i];if(!r.id||r.id==='config')continue;
+    var r=inc[i];if(!r.id||r.id===D.device.shop)continue;
     if(r.works&&typeof r.works==='string'){try{r.works=JSON.parse(r.works)}catch(e){r.works=[]}}
     r.updated=Number(r.updated)||0;if(r.date)r.date=dOnly(r.date);
     var cur=byId(arr,r.id);
@@ -493,12 +496,12 @@ function merge(arr,inc){
   return n;
 }
 function sync(manual){
-  var url=(D.device.url||'').trim();
-  if(!url){if(manual){go('set');flash('Сначала укажите адрес базы',true)}return}
+  var url=(D.device.url||'').trim(),shop=(D.device.shop||'').trim();
+  if(!url||!shop){if(manual){go('set');flash('Укажите адрес базы и код точки',true)}return}
   if(syncing)return;
   syncing=true;setSync('go');
   var p=dirtyList();
-  var body={since:D.lastSync||0,queue:p.queue,orders:p.orders,masters:p.masters,config:p.config};
+  var body={since:D.lastSync||0,shop:D.device.shop,queue:p.queue,orders:p.orders,masters:p.masters,config:p.config};
   fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
     .then(function(r){return r.json()})
     .then(function(res){
@@ -510,7 +513,7 @@ function sync(manual){
       if(res.config&&res.config.length){
         for(var i=0;i<res.config.length;i++){
           var c=res.config[i];
-          if(String(c.id)!=='config')continue;
+          if(String(c.id)!==D.device.shop)continue;
           var val=c.value;if(typeof val==='string'){try{val=JSON.parse(val)}catch(e){val=null}}
           if(val&&!D.cfgDirty&&(Number(c.updated)||0)>=(D.cfgUpd||0)){D.config=val;D.cfgUpd=Number(c.updated)||0;n++}
         }
@@ -1153,6 +1156,7 @@ function saveConfig(){
 }
 function saveDevice(){
   D.device.url=document.getElementById('sUrl').value.trim();
+  D.device.shop=document.getElementById('sShop').value.trim().toLowerCase();
   D.device.meId=document.getElementById('sMe').value;
   saveLocal();applyShop();setSync();flash('Сохранено');
   if(D.device.url)sync(true);
