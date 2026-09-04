@@ -230,6 +230,11 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
       </div>
       <input type="file" id="fileIn" accept=".json" style="display:none" onchange="loadFile(this)">
     </div>
+    <div class="card pad" style="margin-top:12px;border-color:var(--red)">
+      <label style="color:var(--red)">Опасная зона</label>
+      <p style="font-size:13px;color:var(--ink-2);margin:6px 0 10px">Полностью стирает всю очередь и все заказ-наряды в общей базе — у всех устройств сразу. Настройки мастерской (название, часы, прайс) не трогает. Отменить нельзя.</p>
+      <button class="b dan" onclick="wipeAll()" style="width:100%">Очистить всё и начать заново</button>
+    </div>
   </div>
 </div>
 
@@ -467,6 +472,26 @@ function pushAll(){
   D.queue.concat(D.orders).forEach(function(r){r.dirty=1;if(!r.updated)r.updated=Date.now()});
   D.cfgDirty=1;D.cfgUpd=Date.now();D.lastSync=0;saveLocal();sync(true);
 }
+function wipeAll(){
+  if(!confirm('Это сотрёт ВСЮ очередь и ВСЕ заказ-наряды у всех устройств. Отменить нельзя. Продолжить?'))return;
+  var pass=prompt('Для подтверждения введите код доступа:');
+  if(pass===null)return;
+  if(pass.trim()!==document.getElementById('sPass').value.trim()){
+    flash('Код не совпадает, отменено',true);return;
+  }
+  var url=(D.device.url||'').trim();
+  if(!url){flash('Не указан адрес базы',true);return}
+  flash('Стираем…');
+  fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({wipe:true,pass:pass.trim()})})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      if(!res||!res.ok)throw new Error(res&&res.error?res.error:'ошибка');
+      D.queue=[];D.orders=[];D.lastSync=0;
+      saveLocal();refreshAll();
+      flash('Готово, база очищена');
+    })
+    .catch(function(e){flash('Не получилось: '+e.message,true)});
+}
 function refreshAll(){
   renderQueue();renderOrders();renderBase();
   if(page==='hist')renderHist();
@@ -520,7 +545,9 @@ function renderDaysStrip(){
 function renderQueue(){
   renderDaysStrip();
   var L=dayList(),el=document.getElementById('qList'),st=document.getElementById('qStats');
-  var lbl={wait:'Ждёт',work:'В работе',done:'Готово'},cl={wait:'',work:'w',done:'d'},pl={wait:'p-w',work:'p-r',done:'p-d'};
+  var lbl={wait:'Ждёт',seen:'Принято',work:'В работе',part:'Ждёт деталь',done:'Готово'};
+  var cl={wait:'',seen:'',work:'w',part:'w',done:'d'};
+  var pl={wait:'p-w',seen:'p-w',work:'p-r',part:'p-r',done:'p-d'};
   if(!L.length){el.innerHTML='<div class="empty">На этот день записей нет.</div>';st.innerHTML='';return}
   el.innerHTML=L.map(function(c,i){
     var s=c.status||'wait';
@@ -537,7 +564,7 @@ function renderQueue(){
           '<button class="b sm" onclick="move(\''+c.id+'\',-1)"'+(i===0?' disabled':'')+'>↑</button>'+
           '<button class="b sm" onclick="move(\''+c.id+'\',1)"'+(i===L.length-1?' disabled':'')+'>↓</button>'+
         '</div>'+
-        '<button class="b sm" onclick="nextStatus(\''+c.id+'\')">'+(s==='wait'?'Начать':s==='work'?'Готово':'Вернуть')+'</button>'+
+        statusButtons(c,s)+
         '<button class="b sm" onclick="notifyQueue(\''+c.id+'\')">Написать</button>'+
         '<button class="b sm" onclick="moveDay(\''+c.id+'\',\'tom\')">На завтра</button>'+
         '<button class="b sm" onclick="openRec(\''+c.id+'\')">Изменить</button>'+
@@ -545,8 +572,19 @@ function renderQueue(){
       '</div></div>';
   }).join('');
   var w=0,r=0,d=0;
-  L.forEach(function(c){var s=c.status||'wait';if(s==='wait')w++;else if(s==='work')r++;else d++});
+  L.forEach(function(c){var s=c.status||'wait';if(s==='done')d++;else if(s==='work'||s==='part')r++;else w++;});
   st.innerHTML='<span>Всего: <b>'+L.length+'</b></span><span>· Ждут: <b>'+w+'</b></span><span>· В работе: <b>'+r+'</b></span><span>· Готово: <b>'+d+'</b></span>';
+}
+/** Набор кнопок зависит от текущего статуса — так удобнее, чем гонять по кругу одной кнопкой. */
+function statusButtons(c,s){
+  var b='';
+  if(s==='wait')b+='<button class="b sm" onclick="setStatus(\''+c.id+'\',\'seen\')">Принял</button>';
+  if(s==='wait'||s==='seen')b+='<button class="b sm" onclick="setStatus(\''+c.id+'\',\'work\')">Начать</button>';
+  if(s==='work')b+='<button class="b sm" onclick="setStatus(\''+c.id+'\',\'part\')">Ждёт деталь</button>';
+  if(s==='part')b+='<button class="b sm" onclick="setStatus(\''+c.id+'\',\'work\')">Продолжить</button>';
+  if(s!=='done')b+='<button class="b sm" onclick="setStatus(\''+c.id+'\',\'done\')">Готово</button>';
+  else b+='<button class="b sm" onclick="setStatus(\''+c.id+'\',\'wait\')">Вернуть</button>';
+  return b;
 }
 function move(id,dir){
   var L=dayList(),i=-1;
@@ -556,9 +594,9 @@ function move(id,dir){
   L[i].ord=b;L[j].ord=a;touch(L[i]);touch(L[j]);
   saveLocal();renderQueue();sync();
 }
-function nextStatus(id){
-  var c=byId(D.queue,id),s=c.status||'wait';
-  c.status=s==='wait'?'work':s==='work'?'done':'wait';
+function setStatus(id,newStatus){
+  var c=byId(D.queue,id);if(!c)return;
+  c.status=newStatus;
   touch(c);save();renderQueue();
 }
 function notifyQueue(id){
@@ -566,7 +604,9 @@ function notifyQueue(id){
   var s=c.status||'wait',day=dOnly(c.date),name=D.config.name||'Автосервис';
   var t;
   if(s==='wait')t='Здравствуйте! Вы записаны в очередь на '+(day===iso()?'сегодня':ruDate(day))+(c.time?', '+c.time:'')+'. '+name;
+  else if(s==='seen')t='Здравствуйте! Вашу заявку приняли, скоро свяжемся, когда подойдёт очередь. '+name;
   else if(s==='work')t='Здравствуйте! Ваша очередь подошла, ждём вас. '+name;
+  else if(s==='part')t='Здравствуйте! Ваш автомобиль ждёт запчасть, как только придёт — сразу продолжим и сообщим. '+name;
   else t='Здравствуйте! Ваш автомобиль готов, можно забирать. '+name;
   var ph=String(c.phone||'').replace(/\D/g,'');
   if(ph.length===11&&ph[0]==='8')ph='7'+ph.slice(1);
@@ -641,7 +681,7 @@ function renderHist(){
   document.getElementById('histCount').textContent=L.length+' записей';
   var el=document.getElementById('histList');
   if(!L.length){el.innerHTML='<div class="empty">Ничего не найдено.</div>';return}
-  var lbl={wait:'Ждёт',work:'В работе',done:'Готово'},pl={wait:'p-w',work:'p-r',done:'p-d'};
+  var lbl={wait:'Ждёт',seen:'Принято',work:'В работе',part:'Ждёт деталь',done:'Готово'},pl={wait:'p-w',seen:'p-w',work:'p-r',part:'p-r',done:'p-d'};
   el.innerHTML=L.slice(0,300).map(function(c){
     var s=c.status||'wait',del=Number(c.deleted);
     return '<div class="row"><div class="grow">'+
