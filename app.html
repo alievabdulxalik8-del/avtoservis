@@ -135,7 +135,7 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     <div class="f"><label>Чем занимаетесь</label><input id="stSpec" placeholder="Автоэлектрик, диагностика, автосервис"></div>
     <div class="f"><label>Телефон</label><input id="stPhone" placeholder="+7 900 000-00-00"></div>
     <div class="f"><label>Рабочие часы (покажутся клиентам)</label><input id="stHours" placeholder="Пн–Сб 9:00–19:00, вс выходной"></div>
-    <div class="f"><label>Адрес общей базы (ссылка .../exec)</label><input id="stUrl" placeholder="https://script.google.com/macros/s/…/exec"></div>
+    <div class="f"><label>Адрес общей базы</label><input id="stUrl" placeholder="https://…supabase.co/functions/v1/sync"></div>
     <div class="f"><label>Код доступа</label><input id="stPass" type="password" placeholder="ваш секретный код"></div>
     <div class="err" id="setupErr"></div>
     <button class="b pri" onclick="finishSetup()" style="width:100%">Начать работу</button>
@@ -330,7 +330,7 @@ window.onerror=function(m,s,l){
 };
 
 var KEY='autoqueue_solo_v1';
-var DEPLOY_URL='<?!= deployUrl ?>';
+var DEPLOY_URL='https://hyjyfmgskcjijyyblvtg.supabase.co/functions/v1/sync';
 var D={queue:[],orders:[],config:{},cfgUpd:0,cfgDirty:0,device:{},lastSync:0};
 var editRec=null,editOrd=null,page='q',syncing=false,canStore=true;
 
@@ -362,7 +362,7 @@ function load(){
   try{v=localStorage.getItem(KEY)}catch(e){canStore=false}
   if(!v){try{v=sessionStorage.getItem(KEY)}catch(e){}}
   if(v){try{D=Object.assign(D,JSON.parse(v))}catch(e){}}
-  if(!D.device.url&&DEPLOY_URL&&DEPLOY_URL.indexOf('exec')>0)D.device.url=DEPLOY_URL;
+  if(!D.device.url&&DEPLOY_URL&&DEPLOY_URL.indexOf('http')===0)D.device.url=DEPLOY_URL;
 
   if(!D.config.name && !D.device.url){
     document.getElementById('load').style.display='none';
@@ -963,9 +963,9 @@ load();
 
 document.addEventListener('DOMContentLoaded',function(){
   var el=document.getElementById('stUrl');
-  if(el && !el.value && DEPLOY_URL && DEPLOY_URL.indexOf('exec')>0) el.value=DEPLOY_URL;
+  if(el && !el.value && DEPLOY_URL && DEPLOY_URL.indexOf('http')===0) el.value=DEPLOY_URL;
 });
-if(DEPLOY_URL && DEPLOY_URL.indexOf('exec')>0){
+if(DEPLOY_URL && DEPLOY_URL.indexOf('http')===0){
   var su=document.getElementById('stUrl'); if(su && !su.value) su.value=DEPLOY_URL;
 }
 </script>
