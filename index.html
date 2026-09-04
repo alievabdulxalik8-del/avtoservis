@@ -113,7 +113,7 @@ button:disabled{opacity:.5}
 </div>
 
 <script>
-var BASE_URL = 'https://script.google.com/macros/s/AKfycbxQJJedFF8i_WMealF1McGd05djkOw04dxSvQvXNpvz1tiYma37dVwqR2a_20WuX3CJsQ/exec';
+var BASE_URL = 'https://hyjyfmgskcjijyyblvtg.supabase.co/functions/v1/sync';
 var LKEY = 'client_bookings_v3';   // {date, id}[] — без кэша позиции, она всегда считается заново
 var DEVICE_CAP = 3;                // сколько активных (незавершённых) записей можно держать с одного устройства одновременно
 var submitting = false;
@@ -212,7 +212,7 @@ function render(data){
 }
 
 function loadFeed(){
-  if(!BASE_URL||BASE_URL.indexOf('exec')<0){
+  if(!BASE_URL||BASE_URL.indexOf('http')!==0){
     document.getElementById('qList').innerHTML='<div class="empty">Страница не подключена к базе</div>';return;
   }
   fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true})})
@@ -232,7 +232,7 @@ function submitForm(){
   var day=document.getElementById('bdate').value||iso();
   var err=document.getElementById('err');
   if(!name||!phone){err.textContent='Заполните имя и телефон.';err.style.display='block';return}
-  if(!BASE_URL||BASE_URL.indexOf('exec')<0){err.textContent='Запись временно недоступна.';err.style.display='block';return}
+  if(!BASE_URL||BASE_URL.indexOf('http')!==0){err.textContent='Запись временно недоступна.';err.style.display='block';return}
   if(myBookings().length>=DEVICE_CAP){
     err.textContent='С этого устройства уже '+DEVICE_CAP+' активные записи. Дождитесь завершения одной или обратитесь в мастерскую напрямую.';
     err.style.display='block';return;
