@@ -64,8 +64,37 @@ button:disabled{opacity:.5}
       <label style="font-size:16px;margin-bottom:12px">Записаться</label>
       <div class="err" id="err"></div>
       <input id="name" placeholder="Ваше имя">
-      <input id="phone" type="tel" placeholder="Телефон">
-      <input id="car" placeholder="Марка авто (необязательно)">
+      <input id="phone" type="tel" inputmode="numeric" placeholder="Телефон">
+      <input id="car" list="carList" placeholder="Марка авто (необязательно)">
+      <datalist id="carList">
+        <option value="ВАЗ (Лада)">
+        <option value="Лада Гранта">
+        <option value="Лада Веста">
+        <option value="Лада Приора">
+        <option value="Лада 2110">
+        <option value="Лада Калина">
+        <option value="Нива">
+        <option value="УАЗ">
+        <option value="ГАЗель">
+        <option value="Hyundai">
+        <option value="Kia">
+        <option value="Toyota">
+        <option value="Nissan">
+        <option value="Renault">
+        <option value="Chevrolet">
+        <option value="Datsun">
+        <option value="Volkswagen">
+        <option value="Skoda">
+        <option value="Mitsubishi">
+        <option value="Mazda">
+        <option value="Ford">
+        <option value="Chery">
+        <option value="Geely">
+        <option value="Haval">
+        <option value="BMW">
+        <option value="Mercedes">
+        <option value="Audi">
+      </datalist>
       <textarea id="what" rows="2" placeholder="Что случилось (необязательно)"></textarea>
       <label>Когда</label>
       <input id="bdate" type="date">
@@ -78,7 +107,7 @@ button:disabled{opacity:.5}
       <div class="num" id="posNum">—</div>
       <h2 id="doneH2">Вы записаны</h2>
       <p id="doneTxt">Ваша позиция в очереди</p>
-      <button class="linkbtn" onclick="showForm()" id="againBtn">Записать ещё одного</button>
+      <p style="font-size:13px;color:var(--ink-2);line-height:1.4">Мастер позвонит вам заранее, когда до вас дойдёт очередь — просто ждите звонка, ничего дополнительно делать не нужно.</p>
     </div>
   </div>
 </div>
@@ -126,7 +155,6 @@ function showDone(date,id,feed){
   document.getElementById('posNum').textContent=pos||'—';
   document.getElementById('doneH2').textContent=pos?'Вы записаны':'Записываем…';
   document.getElementById('doneTxt').textContent='Ваша позиция в очереди на '+ruDate(date);
-  document.getElementById('againBtn').style.display=myBookings().length<DEVICE_CAP?'block':'none';
 }
 function showForm(){
   document.getElementById('form-card').style.display='block';
@@ -166,7 +194,9 @@ function render(data){
   var mineIds=myBookings().map(function(b){return b.id;});
   var qEl=document.getElementById('qList');
   document.getElementById('qCount').textContent=feed.length?('всего: '+feed.length):'';
-  var lbl={wait:'Ждёт',work:'В работе',done:'Готово'},cl={wait:'',work:'work',done:'done'},pl={wait:'p-wait',work:'p-work',done:'p-done'};
+  var lbl={wait:'Ждёт',seen:'Принято',work:'В работе',part:'Ждёт деталь',done:'Готово'},
+      cl={wait:'',seen:'',work:'work',part:'work',done:'done'},
+      pl={wait:'p-wait',seen:'p-wait',work:'p-work',part:'p-work',done:'p-done'};
   if(!feed.length){qEl.innerHTML='<div class="empty">Пока никто не записан — вы можете быть первым</div>'}
   else{
     qEl.innerHTML=feed.map(function(c){
