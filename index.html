@@ -46,6 +46,17 @@ button:disabled{opacity:.5}
 </head>
 <body>
 <div class="wrap">
+
+  <div id="pickerView" style="display:none">
+    <h1>Выберите мастерскую</h1>
+    <div class="sub">кому хотите записаться</div>
+    <div class="card">
+      <div id="pickerList"></div>
+    </div>
+  </div>
+
+  <div id="shopView" style="display:none">
+  <p id="backToPicker" style="display:none;margin-bottom:10px"><a href="javascript:void(0)" onclick="goToPicker()" style="color:var(--blue);text-decoration:none;font-weight:700;font-size:13px">← все мастерские</a></p>
   <h1 id="shopName">Автосервис</h1>
   <div class="sub" id="shopSub">электронная очередь</div>
 
@@ -110,14 +121,44 @@ button:disabled{opacity:.5}
       <p style="font-size:13px;color:var(--ink-2);line-height:1.4">Мастер позвонит вам заранее, когда до вас дойдёт очередь — просто ждите звонка, ничего дополнительно делать не нужно.</p>
     </div>
   </div>
+  </div>
 </div>
 
 <script>
 var BASE_URL = 'https://hyjyfmgskcjijyyblvtg.supabase.co/functions/v1/sync';
-var LKEY = 'client_bookings_v3';   // {date, id}[] — без кэша позиции, она всегда считается заново
+var SHOP = new URLSearchParams(location.search).get('shop') || '';
+var LKEY = 'client_bookings_v3' + (SHOP ? '_' + SHOP : '');
 var DEVICE_CAP = 3;                // сколько активных (незавершённых) записей можно держать с одного устройства одновременно
 var submitting = false;
 var lastFeed = [];
+
+function goToPicker(){
+  var u=new URL(location.href);u.searchParams.delete('shop');
+  location.href=u.toString();
+}
+function loadPicker(){
+  document.getElementById('pickerView').style.display='block';
+  document.getElementById('shopView').style.display='none';
+  var el=document.getElementById('pickerList');
+  el.innerHTML='<div class="empty">Загрузка…</div>';
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({listShops:true})})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      var L=(res&&res.shops)||[];
+      if(!L.length){el.innerHTML='<div class="empty">Пока нет ни одной мастерской</div>';return}
+      el.innerHTML=L.map(function(s){
+        return '<div class="row" style="cursor:pointer" onclick="chooseShop(\''+esc(s.id)+'\')">'+
+          '<div style="flex:1"><div class="nm">'+esc(s.name||s.id)+'</div>'+
+          '<div style="font-size:12px;color:var(--ink-2);margin-top:1px">'+esc(s.spec||'')+(s.hours?' · '+esc(s.hours):'')+'</div></div>'+
+          '<div style="color:var(--ink-2)">›</div></div>';
+      }).join('');
+    })
+    .catch(function(){el.innerHTML='<div class="empty">Не удалось загрузить список</div>'});
+}
+function chooseShop(id){
+  var u=new URL(location.href);u.searchParams.set('shop',id);
+  location.href=u.toString();
+}
 
 function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})}
 function iso(d){var x=d||new Date();return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
@@ -212,15 +253,22 @@ function render(data){
 }
 
 function loadFeed(){
+  if(!SHOP)return;
   if(!BASE_URL||BASE_URL.indexOf('http')!==0){
     document.getElementById('qList').innerHTML='<div class="empty">Страница не подключена к базе</div>';return;
   }
-  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true})})
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({board:true,shop:SHOP})})
     .then(function(r){return r.json()})
-    .then(function(res){if(res&&res.ok)render(res)})
+    .then(function(res){if(res&&res.ok)render(res);else if(res&&res.error){document.getElementById('qList').innerHTML='<div class="empty">'+esc(res.error)+'</div>'}})
     .catch(function(){});
 }
-loadFeed();setInterval(loadFeed,10000);
+if(SHOP){
+  document.getElementById('backToPicker').style.display='block';
+  document.getElementById('shopView').style.display='block';
+  loadFeed();setInterval(loadFeed,10000);
+} else {
+  loadPicker();
+}
 document.getElementById('bdate').value=iso();
 document.getElementById('bdate').min=iso();
 
@@ -253,7 +301,7 @@ function doSubmit(rec,day,id,confirmMove){
   var btn=document.getElementById('submitBtn');
   if(btn){btn.disabled=true;btn.textContent='Записываем…'}
 
-  var body={board:true,date:day,queue:[Object.assign({},rec,{confirmMove:!!confirmMove})]};
+  var body={board:true,shop:SHOP,date:day,queue:[Object.assign({},rec,{confirmMove:!!confirmMove})]};
 
   fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
     .then(function(r){return r.json()})
