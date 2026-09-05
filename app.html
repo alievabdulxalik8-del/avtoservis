@@ -153,6 +153,7 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
   <div class="card pad">
     <div class="f"><label>Название (СТО, ИП, или просто ваше имя)</label><input id="stName" placeholder="СТО «Акуша-Авто» / ИП Алиев"></div>
     <div class="f"><label>Ваше ФИО</label><input id="stFio" placeholder="Абдулхалик Алиев"></div>
+    <div class="f"><label>Село / населённый пункт</label><input id="stVillage" placeholder="Акуша"></div>
     <div class="f"><label>Чем занимаетесь</label><input id="stSpec" placeholder="Автоэлектрик, диагностика, автосервис"></div>
     <div class="f"><label>Телефон</label><input id="stPhone" placeholder="+7 900 000-00-00"></div>
     <div class="f"><label>Рабочие часы (покажутся клиентам)</label><input id="stHours" placeholder="Пн–Сб 9:00–19:00, вс выходной"></div>
@@ -228,6 +229,7 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
         <div class="f"><label>Ваше ФИО</label><input id="sFio"></div>
         <div class="f"><label>Телефон</label><input id="sPhone"></div>
       </div>
+      <div class="f"><label>Село / населённый пункт</label><input id="sVillage" placeholder="Акуша"></div>
       <div class="f"><label>Чем занимаетесь</label><input id="sSpec"></div>
       <div class="f"><label>Рабочие часы (видны клиентам)</label><input id="sHours"></div>
       <div class="f"><label>Гарантия по умолчанию</label><input id="sWar" placeholder="1 месяц"></div>
@@ -457,6 +459,7 @@ function finishSetup(){
   if(!name||!shop||!pass){e.textContent='Заполните название, логин и пароль.';e.style.display='block';return}
   e.style.display='none';
   var cfg={name:name,master:document.getElementById('stFio').value.trim(),
+    village:document.getElementById('stVillage').value.trim(),
     spec:document.getElementById('stSpec').value.trim(),phone:document.getElementById('stPhone').value.trim(),
     hours:document.getElementById('stHours').value.trim(),war:'',price:[]};
   fetch(DEPLOY_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({register:true,login:shop,pass:pass,config:[{id:'config',value:cfg,updated:Date.now()}]})})
@@ -474,6 +477,14 @@ function applyAll(){
   document.getElementById('sShop').value=D.device.shop||'';
   document.getElementById('sPass').value=D.device.pass||'';
   document.getElementById('clientLink').value=D.device.shop?(location.origin+location.pathname.replace(/app\.html$/,'')+'?shop='+encodeURIComponent(D.device.shop)):'';
+  document.getElementById('sName').value=D.config.name||'';
+  document.getElementById('sFio').value=D.config.master||'';
+  document.getElementById('sVillage').value=D.config.village||'';
+  document.getElementById('sPhone').value=D.config.phone||'';
+  document.getElementById('sSpec').value=D.config.spec||'';
+  document.getElementById('sHours').value=D.config.hours||'';
+  document.getElementById('sWar').value=D.config.war||'';
+  document.getElementById('sServ').value=D.config.serv||'';
 }
 
 function dirtyList(){
@@ -1044,6 +1055,7 @@ function saveConfig(){
   saveDevicePass();
   D.config.name=document.getElementById('sName').value.trim();
   D.config.master=document.getElementById('sFio').value.trim();
+  D.config.village=document.getElementById('sVillage').value.trim();
   D.config.phone=document.getElementById('sPhone').value.trim();
   D.config.spec=document.getElementById('sSpec').value.trim();
   D.config.hours=document.getElementById('sHours').value.trim();
