@@ -126,8 +126,29 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
 <div class="load" id="load">Загрузка…</div>
 
 <!-- ПЕРВЫЙ ЗАПУСК -->
-<div class="setup" id="setup" style="display:none">
-  <h1>Настройка перед началом</h1>
+<div class="setup" id="landing" style="display:none">
+  <h1>Приложение для мастера</h1>
+  <p>Запись клиентов и заказ-наряды. Один аккаунт — один кабинет мастерской, данные не пересекаются с другими мастерами.</p>
+  <div class="card pad">
+    <button class="b pri" style="width:100%;margin-bottom:8px" onclick="showAuth('login')">Войти</button>
+    <button class="b" style="width:100%" onclick="showAuth('register')">У меня ещё нет аккаунта — зарегистрироваться</button>
+  </div>
+</div>
+
+<div class="setup" id="loginForm" style="display:none">
+  <h1>Вход</h1>
+  <p>Логин и пароль — те, что указывали при регистрации (или которые вам дал ваш мастер, если это второе устройство).</p>
+  <div class="card pad">
+    <div class="f"><label>Логин</label><input id="liLogin" placeholder="akusha-avto"></div>
+    <div class="f"><label>Пароль</label><input id="liPass" type="password"></div>
+    <div class="err" id="loginErr"></div>
+    <button class="b pri" onclick="doLogin()" style="width:100%">Войти</button>
+    <button class="b ghost" onclick="showAuth('landing')" style="width:100%;margin-top:8px">Назад</button>
+  </div>
+</div>
+
+<div class="setup" id="registerForm" style="display:none">
+  <h1>Регистрация</h1>
   <p>Заполните один раз — эти данные пойдут в заказ-наряды и на страницу для клиентов.</p>
   <div class="card pad">
     <div class="f"><label>Название (СТО, ИП, или просто ваше имя)</label><input id="stName" placeholder="СТО «Акуша-Авто» / ИП Алиев"></div>
@@ -135,12 +156,11 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     <div class="f"><label>Чем занимаетесь</label><input id="stSpec" placeholder="Автоэлектрик, диагностика, автосервис"></div>
     <div class="f"><label>Телефон</label><input id="stPhone" placeholder="+7 900 000-00-00"></div>
     <div class="f"><label>Рабочие часы (покажутся клиентам)</label><input id="stHours" placeholder="Пн–Сб 9:00–19:00, вс выходной"></div>
-    <div class="f"><label>Код вашего кабинета (короткое слово латиницей)</label><input id="stShop" placeholder="akusha-avto"></div>
-    <p style="font-size:12px;color:var(--ink-2);margin:-6px 0 10px">Новый мастер — придумайте новый код. Настраиваете второе устройство для уже существующего кабинета — введите тот же код и тот же пароль, что и там.</p>
-    <div class="f"><label>Адрес общей базы</label><input id="stUrl" placeholder="https://…supabase.co/functions/v1/sync"></div>
-    <div class="f"><label>Код доступа</label><input id="stPass" type="password" placeholder="ваш секретный код"></div>
+    <div class="f"><label>Придумайте логин (латиницей, без пробелов)</label><input id="stShop" placeholder="akusha-avto"></div>
+    <div class="f"><label>Придумайте пароль</label><input id="stPass" type="password"></div>
     <div class="err" id="setupErr"></div>
-    <button class="b pri" onclick="finishSetup()" style="width:100%">Начать работу</button>
+    <button class="b pri" onclick="finishSetup()" style="width:100%">Зарегистрироваться</button>
+    <button class="b ghost" onclick="showAuth('landing')" style="width:100%;margin-top:8px">Назад</button>
   </div>
 </div>
 
@@ -216,15 +236,16 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
       <button class="b pri" onclick="saveConfig()">Сохранить</button>
     </div>
     <div class="card pad" style="margin-top:12px">
-      <label>Код вашего кабинета</label>
-      <div class="f"><input id="sShop"></div>
-      <label>Адрес общей базы</label>
-      <div class="f"><input id="sUrl"></div>
-      <label>Код доступа</label>
-      <div class="f"><input id="sPass" type="password"></div>
+      <label>Логин</label>
+      <div class="f"><input id="sShop" readonly style="color:var(--ink-2)"></div>
+      <label>Пароль</label>
+      <div class="f"><input id="sPass" type="text" readonly style="color:var(--ink-2)"></div>
+      <p style="font-size:12px;color:var(--ink-2);margin:-6px 0 10px">Логин и пароль этого кабинета — сюда же входите на других устройствах.</p>
+      <input type="hidden" id="sUrl">
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="b" onclick="sync(true)">Синхронизировать</button>
         <button class="b" onclick="pushAll()">Выгрузить всё в базу</button>
+        <button class="b ghost" onclick="logout()">Выйти из кабинета</button>
       </div>
       <div id="syncMsg" style="font-size:13px;margin-top:10px;color:var(--ink-2)"></div>
     </div>
@@ -373,19 +394,49 @@ function load(){
   try{v=localStorage.getItem(KEY)}catch(e){canStore=false}
   if(!v){try{v=sessionStorage.getItem(KEY)}catch(e){}}
   if(v){try{D=Object.assign(D,JSON.parse(v))}catch(e){}}
-  if(!D.device.url&&DEPLOY_URL&&DEPLOY_URL.indexOf('http')===0)D.device.url=DEPLOY_URL;
-  if(!D.device.shop&&D.device.url)D.device.shop='magas'; // старые установки до перехода на мульти-мастерскую схему
+  if(!D.device.shop&&D.device.url)D.device.shop='magas'; // старые установки до перехода на логин/пароль
+  if(!D.device.url)D.device.url=DEPLOY_URL;
 
-  if(!D.config.name && !D.device.url){
+  if(!D.device.shop){
     document.getElementById('load').style.display='none';
-    document.getElementById('setup').style.display='block';
+    showAuth('landing');
     return;
   }
   boot();
 }
+function showAuth(v){
+  document.getElementById('load').style.display='none';
+  document.getElementById('landing').style.display=v==='landing'?'block':'none';
+  document.getElementById('loginForm').style.display=v==='login'?'block':'none';
+  document.getElementById('registerForm').style.display=v==='register'?'block':'none';
+}
+function doLogin(){
+  var login=document.getElementById('liLogin').value.trim().toLowerCase().replace(/[^a-z0-9а-яё-]+/gi,'-').replace(/^-+|-+$/g,'');
+  var pass=document.getElementById('liPass').value;
+  var e=document.getElementById('loginErr');
+  if(!login||!pass){e.textContent='Укажите логин и пароль.';e.style.display='block';return}
+  e.style.display='none';
+  fetch(DEPLOY_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({login:login,pass:pass})})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      if(!res||!res.ok){e.textContent=(res&&res.error)||'Не удалось войти';e.style.display='block';return}
+      D.device.url=DEPLOY_URL;D.device.shop=login;D.device.pass=pass;
+      if(res.config&&res.config[0]){D.config=res.config[0].value;D.cfgUpd=Number(res.config[0].updated)||Date.now()}
+      D.cfgDirty=0;saveLocal();boot();
+    })
+    .catch(function(){e.textContent='Нет связи с сервером.';e.style.display='block'});
+}
+function logout(){
+  if(!confirm('Выйти из этого кабинета на этом устройстве? Локальные данные на устройстве будут очищены (в базе ничего не удалится).'))return;
+  try{localStorage.removeItem(KEY)}catch(e){}
+  try{sessionStorage.removeItem(KEY)}catch(e){}
+  location.reload();
+}
 function boot(){
   document.getElementById('load').style.display='none';
-  document.getElementById('setup').style.display='none';
+  document.getElementById('landing').style.display='none';
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('registerForm').style.display='none';
   document.getElementById('app').style.display='';
   document.getElementById('nav').style.display='';
   document.getElementById('fab').style.display='';
@@ -394,21 +445,28 @@ function boot(){
     w.textContent='Браузер не сохраняет данные на этом устройстве. Пока подключена база, записи всё равно уходят туда.';
   }
   applyAll();
-  if(D.device.url)sync();
+  if(D.device.shop)sync();
   setInterval(function(){if(!document.hidden)sync()},20000);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)sync()});
 }
 function finishSetup(){
   var name=document.getElementById('stName').value.trim();
-  var url=document.getElementById('stUrl').value.trim();
   var shop=document.getElementById('stShop').value.trim().toLowerCase().replace(/[^a-z0-9а-яё-]+/gi,'-').replace(/^-+|-+$/g,'');
+  var pass=document.getElementById('stPass').value;
   var e=document.getElementById('setupErr');
-  if(!name||!url||!shop){e.textContent='Укажите название, код кабинета и адрес базы.';e.style.display='block';return}
-  D.config={name:name,master:document.getElementById('stFio').value.trim(),
+  if(!name||!shop||!pass){e.textContent='Заполните название, логин и пароль.';e.style.display='block';return}
+  e.style.display='none';
+  var cfg={name:name,master:document.getElementById('stFio').value.trim(),
     spec:document.getElementById('stSpec').value.trim(),phone:document.getElementById('stPhone').value.trim(),
     hours:document.getElementById('stHours').value.trim(),war:'',price:[]};
-  D.device.url=url;D.device.shop=shop;D.device.pass=document.getElementById('stPass').value.trim();D.cfgUpd=Date.now();D.cfgDirty=1;
-  saveLocal();boot();
+  fetch(DEPLOY_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({register:true,login:shop,pass:pass,config:[{id:'config',value:cfg,updated:Date.now()}]})})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      if(!res||!res.ok){e.textContent=(res&&res.error)||'Не удалось зарегистрироваться';e.style.display='block';return}
+      D.config=cfg;D.device.url=DEPLOY_URL;D.device.shop=shop;D.device.pass=pass;D.cfgUpd=Date.now();D.cfgDirty=0;
+      saveLocal();boot();
+    })
+    .catch(function(){e.textContent='Нет связи с сервером.';e.style.display='block'});
 }
 function applyAll(){
   applyShop();today();renderOrders();renderBase();renderMore();setSync();
@@ -429,7 +487,7 @@ function setSync(state,msg){
   var d=document.querySelector('#syncBox .dot'),t=document.getElementById('syncTxt'),s=document.getElementById('syncSub');
   var p=dirtyList(),wait=p.queue.length+p.orders.length+p.config.length;
   d.className='dot'+(state==='ok'?' ok':state==='err'?' err':state==='go'?' go':'');
-  if(!D.device.url){t.textContent='база не подключена';s.textContent='Ещё → Настройки';return}
+  if(!D.device.shop){t.textContent='не выполнен вход';s.textContent='Ещё → Настройки';return}
   if(state==='go'){t.textContent='обмен…';s.textContent='';return}
   if(state==='err'){t.textContent='нет связи';s.textContent=wait?wait+' ждут отправки':'повторю сам';return}
   t.textContent=state==='ok'?'обновлено '+hhmm():'база подключена';
@@ -451,8 +509,8 @@ function merge(arr,inc){
 }
 function sync(manual){
   if(document.getElementById('sUrl'))saveDevicePass();
-  var url=(D.device.url||'').trim();
-  if(!url){if(manual){go('set');flash('Сначала укажите адрес базы',true)}return}
+  var url=(D.device.url||DEPLOY_URL||'').trim();
+  if(!D.device.shop){if(manual){go('set');flash('Сначала войдите в кабинет',true)}return}
   if(syncing)return;
   syncing=true;setSync('go');
   var p=dirtyList();
