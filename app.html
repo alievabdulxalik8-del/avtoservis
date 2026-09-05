@@ -135,6 +135,8 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     <div class="f"><label>Чем занимаетесь</label><input id="stSpec" placeholder="Автоэлектрик, диагностика, автосервис"></div>
     <div class="f"><label>Телефон</label><input id="stPhone" placeholder="+7 900 000-00-00"></div>
     <div class="f"><label>Рабочие часы (покажутся клиентам)</label><input id="stHours" placeholder="Пн–Сб 9:00–19:00, вс выходной"></div>
+    <div class="f"><label>Код вашего кабинета (короткое слово латиницей)</label><input id="stShop" placeholder="akusha-avto"></div>
+    <p style="font-size:12px;color:var(--ink-2);margin:-6px 0 10px">Новый мастер — придумайте новый код. Настраиваете второе устройство для уже существующего кабинета — введите тот же код и тот же пароль, что и там.</p>
     <div class="f"><label>Адрес общей базы</label><input id="stUrl" placeholder="https://…supabase.co/functions/v1/sync"></div>
     <div class="f"><label>Код доступа</label><input id="stPass" type="password" placeholder="ваш секретный код"></div>
     <div class="err" id="setupErr"></div>
@@ -192,6 +194,12 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     <p style="font-size:12px;color:var(--ink-3);margin-top:10px">Удалённые записи не стираются — их можно вернуть.</p>
   </div>
 
+  <div class="page" id="p-debt">
+    <div class="bar"><button class="b sm" onclick="go('more')">← Назад</button><h2 style="margin-left:8px">Должники</h2><span id="debtCount" style="font-size:13px;color:var(--ink-2)"></span></div>
+    <div class="card" id="debtList"></div>
+    <div class="stats" id="debtStats"></div>
+  </div>
+
   <div class="page" id="p-set">
     <div class="bar"><button class="b sm" onclick="go('more')">← Назад</button><h2 style="margin-left:8px">Настройки</h2></div>
     <div class="card pad">
@@ -208,6 +216,8 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
       <button class="b pri" onclick="saveConfig()">Сохранить</button>
     </div>
     <div class="card pad" style="margin-top:12px">
+      <label>Код вашего кабинета</label>
+      <div class="f"><input id="sShop"></div>
       <label>Адрес общей базы</label>
       <div class="f"><input id="sUrl"></div>
       <label>Код доступа</label>
@@ -220,7 +230,8 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     </div>
     <div class="card pad" style="margin-top:12px">
       <label>Ссылка для клиентов</label>
-      <p style="font-size:13px;color:var(--ink-2);margin:6px 0" id="clientLinkHint">Клиентская страница теперь открывается прямо по главному адресу сайта (и по домену, если он подключён). Эту ссылку кидайте в канал или делайте на неё QR. Это приложение, где вы сейчас находитесь, доступно по адресу с /app в конце.</p>
+      <p style="font-size:13px;color:var(--ink-2);margin:6px 0" id="clientLinkHint">Эту ссылку кидайте в канал или делайте на неё QR — клиенты попадут сразу на запись именно к вам, минуя общий список мастерских.</p>
+      <div class="f"><input id="clientLink" readonly onclick="this.select()"></div>
     </div>
     <div class="card pad" style="margin-top:12px">
       <label>Резервная копия на устройство</label>
@@ -363,6 +374,7 @@ function load(){
   if(!v){try{v=sessionStorage.getItem(KEY)}catch(e){}}
   if(v){try{D=Object.assign(D,JSON.parse(v))}catch(e){}}
   if(!D.device.url&&DEPLOY_URL&&DEPLOY_URL.indexOf('http')===0)D.device.url=DEPLOY_URL;
+  if(!D.device.shop&&D.device.url)D.device.shop='magas'; // старые установки до перехода на мульти-мастерскую схему
 
   if(!D.config.name && !D.device.url){
     document.getElementById('load').style.display='none';
@@ -389,18 +401,21 @@ function boot(){
 function finishSetup(){
   var name=document.getElementById('stName').value.trim();
   var url=document.getElementById('stUrl').value.trim();
+  var shop=document.getElementById('stShop').value.trim().toLowerCase().replace(/[^a-z0-9а-яё-]+/gi,'-').replace(/^-+|-+$/g,'');
   var e=document.getElementById('setupErr');
-  if(!name||!url){e.textContent='Укажите название и адрес базы.';e.style.display='block';return}
+  if(!name||!url||!shop){e.textContent='Укажите название, код кабинета и адрес базы.';e.style.display='block';return}
   D.config={name:name,master:document.getElementById('stFio').value.trim(),
     spec:document.getElementById('stSpec').value.trim(),phone:document.getElementById('stPhone').value.trim(),
     hours:document.getElementById('stHours').value.trim(),war:'',price:[]};
-  D.device.url=url;D.device.pass=document.getElementById('stPass').value.trim();D.cfgUpd=Date.now();D.cfgDirty=1;
+  D.device.url=url;D.device.shop=shop;D.device.pass=document.getElementById('stPass').value.trim();D.cfgUpd=Date.now();D.cfgDirty=1;
   saveLocal();boot();
 }
 function applyAll(){
   applyShop();today();renderOrders();renderBase();renderMore();setSync();
   document.getElementById('sUrl').value=D.device.url||'';
+  document.getElementById('sShop').value=D.device.shop||'';
   document.getElementById('sPass').value=D.device.pass||'';
+  document.getElementById('clientLink').value=D.device.shop?(location.origin+location.pathname.replace(/app\.html$/,'')+'?shop='+encodeURIComponent(D.device.shop)):'';
 }
 
 function dirtyList(){
@@ -441,7 +456,7 @@ function sync(manual){
   if(syncing)return;
   syncing=true;setSync('go');
   var p=dirtyList();
-  var body={since:D.lastSync||0,pass:D.device.pass||'',queue:p.queue,orders:p.orders,config:p.config};
+  var body={shop:D.device.shop||'',since:D.lastSync||0,pass:D.device.pass||'',queue:p.queue,orders:p.orders,config:p.config};
   fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
     .then(function(r){return r.json()})
     .then(function(res){
@@ -482,7 +497,7 @@ function wipeAll(){
   var url=(D.device.url||'').trim();
   if(!url){flash('Не указан адрес базы',true);return}
   flash('Стираем…');
-  fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({wipe:true,pass:pass.trim()})})
+  fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({wipe:true,shop:D.device.shop||'',pass:pass.trim()})})
     .then(function(r){return r.json()})
     .then(function(res){
       if(!res||!res.ok)throw new Error(res&&res.error?res.error:'ошибка');
@@ -495,17 +510,18 @@ function wipeAll(){
 function refreshAll(){
   renderQueue();renderOrders();renderBase();
   if(page==='hist')renderHist();
+  if(page==='debt')renderDebt();
   setSync();
 }
 
 function go(p){
   page=p;
-  var main=['q','ord','base','more'],sub={hist:'more',set:'more'};
+  var main=['q','ord','base','more'],sub={hist:'more',set:'more',debt:'more'};
   var hi=main.indexOf(sub[p]||p);
   document.querySelectorAll('.page').forEach(function(x){x.classList.remove('on')});
   document.getElementById('p-'+p).classList.add('on');
   document.querySelectorAll('nav button').forEach(function(b,j){b.classList.toggle('on',j===hi)});
-  if(p==='base')renderBase();if(p==='ord')renderOrders();if(p==='hist')renderHist();
+  if(p==='base')renderBase();if(p==='ord')renderOrders();if(p==='hist')renderHist();if(p==='debt')renderDebt();
   document.getElementById('fab').style.display=(p==='q'||p==='ord')?'':'none';
   window.scrollTo(0,0);
 }
@@ -513,9 +529,45 @@ function fabAdd(){page==='ord'?openOrder():openRec()}
 function open_(id){document.getElementById(id).classList.add('on')}
 function close_(id){document.getElementById(id).classList.remove('on')}
 function renderMore(){
+  var d=debtors(),dsum=d.reduce(function(a,c){return a+c.sum},0);
   document.getElementById('moreMenu').innerHTML=
     '<button class="menu" onclick="go(\'hist\')"><b>История записей</b><span>всё, что было, и возврат удалённого</span></button>'+
+    '<button class="menu" onclick="go(\'debt\')"><b>Должники</b><span>'+(d.length?d.length+' чел. на '+money(dsum)+' ₽':'долгов нет')+'</span></button>'+
     '<button class="menu" onclick="go(\'set\')"><b>Настройки</b><span>ваши данные, база, ссылка для клиентов</span></button>';
+}
+
+function debtors(){
+  var m={};
+  live(D.orders).forEach(function(o){
+    if(o.pay!=='В долг'||Number(o.paid))return;
+    var k=String(o.phone||'').replace(/\D/g,'')||o.name;if(!k)return;
+    if(!m[k])m[k]={name:o.name,phone:o.phone,sum:0,orders:[]};
+    m[k].sum+=o.total||0;m[k].orders.push(o);
+    if(o.name&&String(o.name).length>String(m[k].name).length)m[k].name=o.name;
+  });
+  return Object.keys(m).map(function(k){m[k].key=k;return m[k]}).sort(function(a,b){return b.sum-a.sum});
+}
+function renderDebt(){
+  var L=debtors(),el=document.getElementById('debtList');
+  document.getElementById('debtCount').textContent=L.length+' чел.';
+  if(!L.length){el.innerHTML='<div class="empty">Долгов нет.</div>';document.getElementById('debtStats').innerHTML='';return}
+  el.innerHTML=L.map(function(c){
+    return '<div class="row"><div class="grow">'+
+      '<div class="nm">'+esc(c.name)+'</div>'+
+      '<div class="sub"><a href="tel:'+esc(c.phone)+'">'+esc(c.phone)+'</a></div>'+
+      '<div class="sub" style="color:var(--ink-3)">наряды: '+c.orders.map(function(o){return '№'+(o.num||'б/н')}).join(', ')+'</div>'+
+      '</div><div class="acts"><div style="font-weight:700;color:var(--red)">'+money(c.sum)+' ₽</div>'+
+      '<button class="b sm pri" onclick="payAll(\''+c.key+'\')">Погасил</button></div></div>';
+  }).join('');
+  var total=L.reduce(function(a,c){return a+c.sum},0);
+  document.getElementById('debtStats').innerHTML='<span>Всего должников: <b>'+L.length+'</b></span><span>· На сумму: <b>'+money(total)+' ₽</b></span>';
+}
+function payAll(key){
+  if(!confirm('Отметить весь долг этого клиента как оплаченный?'))return;
+  var L=debtors(),c=null;for(var i=0;i<L.length;i++)if(L[i].key===key)c=L[i];
+  if(!c)return;
+  c.orders.forEach(function(o){o.paid=1;touch(o)});
+  save();renderDebt();renderOrders();renderMore();flash('Долг закрыт');
 }
 
 function today(){document.getElementById('qDate').value=iso();renderQueue()}
@@ -926,6 +978,7 @@ function applyShop(){
 }
 function saveDevicePass(){
   D.device.url=document.getElementById('sUrl').value.trim();
+  D.device.shop=document.getElementById('sShop').value.trim().toLowerCase().replace(/[^a-z0-9а-яё-]+/gi,'-').replace(/^-+|-+$/g,'');
   D.device.pass=document.getElementById('sPass').value.trim();
   saveLocal();
 }
