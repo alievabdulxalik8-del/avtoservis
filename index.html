@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Электронная запись</title>
+<title>База автомастеров онлайн</title>
 <style>
 :root{--ink:#101820;--ink-2:#4A5964;--paper:#E8ECEF;--card:#fff;--line:#D4DBE0;
 --blue:#17549E;--blue-bg:#E4EDF9;--amber:#B9740A;--amber-bg:#FCEFD8;
@@ -42,14 +42,18 @@ button:disabled{opacity:.5}
 .done h2{font-size:19px;margin-bottom:6px}
 .done p{color:var(--ink-2);font-size:14px;margin-bottom:14px}
 .refresh{font-size:12px;color:var(--ink-2);text-align:center;margin:-10px 0 16px;line-height:1.4}
+.vchips{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 14px;-webkit-overflow-scrolling:touch}
+.vchip{flex:0 0 auto;font-size:13px;font-weight:700;padding:7px 13px;border-radius:20px;border:1px solid var(--line);background:var(--card);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.vchip.on{background:var(--blue);border-color:var(--blue);color:#fff}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <div id="pickerView" style="display:none">
-    <h1>Выберите мастерскую</h1>
-    <div class="sub">кому хотите записаться</div>
+    <h1>База автомастеров онлайн</h1>
+    <div class="sub">выберите мастера, к которому хотите записаться</div>
+    <div class="vchips" id="villageChips"></div>
     <div class="card">
       <div id="pickerList"></div>
     </div>
@@ -136,6 +140,7 @@ function goToPicker(){
   var u=new URL(location.href);u.searchParams.delete('shop');
   location.href=u.toString();
 }
+var allShops=[],villageFilter='';
 function loadPicker(){
   document.getElementById('pickerView').style.display='block';
   document.getElementById('shopView').style.display='none';
@@ -144,16 +149,35 @@ function loadPicker(){
   fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({listShops:true})})
     .then(function(r){return r.json()})
     .then(function(res){
-      var L=(res&&res.shops)||[];
-      if(!L.length){el.innerHTML='<div class="empty">Пока нет ни одной мастерской</div>';return}
-      el.innerHTML=L.map(function(s){
-        return '<div class="row" style="cursor:pointer" onclick="chooseShop(\''+esc(s.id)+'\')">'+
-          '<div style="flex:1"><div class="nm">'+esc(s.name||s.id)+'</div>'+
-          '<div style="font-size:12px;color:var(--ink-2);margin-top:1px">'+esc(s.spec||'')+(s.hours?' · '+esc(s.hours):'')+'</div></div>'+
-          '<div style="color:var(--ink-2)">›</div></div>';
-      }).join('');
+      allShops=(res&&res.shops)||[];
+      renderVillageChips();
+      renderPickerList();
     })
     .catch(function(){el.innerHTML='<div class="empty">Не удалось загрузить список</div>'});
+}
+function renderVillageChips(){
+  var villages=[];
+  allShops.forEach(function(s){var v=(s.village||'').trim();if(v&&villages.indexOf(v)<0)villages.push(v)});
+  villages.sort(function(a,b){return a.localeCompare(b,'ru')});
+  var box=document.getElementById('villageChips');
+  if(!villages.length){box.innerHTML='';return}
+  var chips=[['','Все сёла']].concat(villages.map(function(v){return [v,v]}));
+  box.innerHTML=chips.map(function(c){
+    return '<div class="vchip'+(villageFilter===c[0]?' on':'')+'" onclick="setVillageFilter(\''+esc(c[0]).replace(/'/g,"\\'")+'\')">'+esc(c[1])+'</div>';
+  }).join('');
+}
+function setVillageFilter(v){villageFilter=v;renderVillageChips();renderPickerList()}
+function renderPickerList(){
+  var el=document.getElementById('pickerList');
+  var L=allShops.filter(function(s){return !villageFilter||(s.village||'').trim()===villageFilter});
+  if(!allShops.length){el.innerHTML='<div class="empty">Пока нет ни одной мастерской</div>';return}
+  if(!L.length){el.innerHTML='<div class="empty">В этом селе пока никого нет</div>';return}
+  el.innerHTML=L.map(function(s){
+    return '<div class="row" style="cursor:pointer" onclick="chooseShop(\''+esc(s.id)+'\')">'+
+      '<div style="flex:1"><div class="nm">'+esc(s.name||s.id)+'</div>'+
+      '<div style="font-size:12px;color:var(--ink-2);margin-top:1px">'+esc(s.spec||'')+(s.village?' · '+esc(s.village):'')+(s.hours?' · '+esc(s.hours):'')+'</div></div>'+
+      '<div style="color:var(--ink-2)">›</div></div>';
+  }).join('');
 }
 function chooseShop(id){
   var u=new URL(location.href);u.searchParams.set('shop',id);
