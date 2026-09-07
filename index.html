@@ -49,90 +49,93 @@ button:disabled{opacity:.5}
 </head>
 <body>
 <div class="wrap">
+<div id="pickerView" style="display:none">
+<h1>База автомастеров онлайн</h1>
+<div class="sub">выберите мастера, к которому хотите записаться</div>
+<div class="vchips" id="villageChips"></div>
+<div class="card">
+<div id="pickerList"></div>
+</div>
+</div>
 
-  <div id="pickerView" style="display:none">
-    <h1>База автомастеров онлайн</h1>
-    <div class="sub">выберите мастера, к которому хотите записаться</div>
-    <div class="vchips" id="villageChips"></div>
-    <div class="card">
-      <div id="pickerList"></div>
-    </div>
-  </div>
+<div id="shopView" style="display:none">
+<p id="backToPicker" style="display:none;margin-bottom:10px"><a href="javascript:void(0)" onclick="goToPicker()" style="color:var(--blue);text-decoration:none;font-weight:700;font-size:13px">← все мастерские</a></p>
+<h1 id="shopName">Автосервис</h1>
+<div class="sub" id="shopSub">электронная очередь</div>
 
-  <div id="shopView" style="display:none">
-  <p id="backToPicker" style="display:none;margin-bottom:10px"><a href="javascript:void(0)" onclick="goToPicker()" style="color:var(--blue);text-decoration:none;font-weight:700;font-size:13px">← все мастерские</a></p>
-  <h1 id="shopName">Автосервис</h1>
-  <div class="sub" id="shopSub">электронная очередь</div>
+<div class="card">
+<div class="info" id="infoBlock"></div>
+</div>
 
-  <div class="card">
-    <div class="info" id="infoBlock"></div>
-  </div>
+<div class="card">
+<div class="hd"><span>Кто сейчас в записи</span><span id="qCount"></span></div>
+<div id="qList"></div>
+</div>
+<div class="refresh">видно машину, проблему, дату и последние 2 цифры телефона — так вы найдёте себя, не видя чужих данных. Обновляется само.</div>
 
-  <div class="card">
-    <div class="hd"><span>Кто сейчас в записи</span><span id="qCount"></span></div>
-    <div id="qList"></div>
-  </div>
-  <div class="refresh">видно машину, проблему, дату и последние 2 цифры телефона — так вы найдёте себя, не видя чужих данных. Обновляется само.</div>
+<div class="card" id="form-card">
+<div class="pad">
+<label style="font-size:16px;margin-bottom:12px">Записаться</label>
+<div class="err" id="err"></div>
+<input id="name" placeholder="Ваше имя">
+<input id="phone" type="tel" inputmode="numeric" placeholder="Телефон">
+<input id="car" list="carList" placeholder="Марка авто (необязательно)">
+<datalist id="carList">
+<option value="ВАЗ (Лада)">
+<option value="Лада Гранта">
+<option value="Лада Веста">
+<option value="Лада Приора">
+<option value="Лада 2110">
+<option value="Лада Калина">
+<option value="Нива">
+<option value="УАЗ">
+<option value="ГАЗель">
+<option value="Hyundai">
+<option value="Kia">
+<option value="Toyota">
+<option value="Nissan">
+<option value="Renault">
+<option value="Chevrolet">
+<option value="Datsun">
+<option value="Volkswagen">
+<option value="Skoda">
+<option value="Mitsubishi">
+<option value="Mazda">
+<option value="Ford">
+<option value="Chery">
+<option value="Geely">
+<option value="Haval">
+<option value="BMW">
+<option value="Mercedes">
+<option value="Audi">
+</datalist>
+<textarea id="what" rows="2" placeholder="Что случилось (необязательно)"></textarea>
+<label>Когда</label>
+<input id="bdate" type="date">
+<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:13px">
+<input type="checkbox" id="agree" style="width:auto;margin-top:3px">
+<label style="font-weight:400;font-size:13px;color:var(--ink-2);margin-bottom:0">Согласен с <a href="/privacy.html" target="_blank" style="color:var(--blue)">политикой конфиденциальности</a></label>
+</div>
+<button id="submitBtn" onclick="submitForm()">Записаться</button>
+</div>
+</div>
 
-  <div class="card" id="form-card">
-    <div class="pad">
-      <label style="font-size:16px;margin-bottom:12px">Записаться</label>
-      <div class="err" id="err"></div>
-      <input id="name" placeholder="Ваше имя">
-      <input id="phone" type="tel" inputmode="numeric" placeholder="Телефон">
-      <input id="car" list="carList" placeholder="Марка авто (необязательно)">
-      <datalist id="carList">
-        <option value="ВАЗ (Лада)">
-        <option value="Лада Гранта">
-        <option value="Лада Веста">
-        <option value="Лада Приора">
-        <option value="Лада 2110">
-        <option value="Лада Калина">
-        <option value="Нива">
-        <option value="УАЗ">
-        <option value="ГАЗель">
-        <option value="Hyundai">
-        <option value="Kia">
-        <option value="Toyota">
-        <option value="Nissan">
-        <option value="Renault">
-        <option value="Chevrolet">
-        <option value="Datsun">
-        <option value="Volkswagen">
-        <option value="Skoda">
-        <option value="Mitsubishi">
-        <option value="Mazda">
-        <option value="Ford">
-        <option value="Chery">
-        <option value="Geely">
-        <option value="Haval">
-        <option value="BMW">
-        <option value="Mercedes">
-        <option value="Audi">
-      </datalist>
-      <textarea id="what" rows="2" placeholder="Что случилось (необязательно)"></textarea>
-      <label>Когда</label>
-      <input id="bdate" type="date">
-      <button id="submitBtn" onclick="submitForm()">Записаться</button>
-    </div>
-  </div>
-
-  <div class="card" id="done-card" style="display:none">
-    <div class="pad done">
-      <div class="num" id="posNum">—</div>
-      <h2 id="doneH2">Вы записаны</h2>
-      <p id="doneTxt">Ваша позиция в очереди</p>
-      <p style="font-size:13px;color:var(--ink-2);line-height:1.4">Мастер позвонит вам заранее, когда до вас дойдёт очередь — просто ждите звонка, ничего дополнительно делать не нужно.</p>
-    </div>
-  </div>
-  </div>
+<div class="card" id="done-card" style="display:none">
+<div class="pad done">
+<div class="num" id="posNum">—</div>
+<h2 id="doneH2">Вы записаны</h2>
+<p id="doneTxt">Ваша позиция в очереди</p>
+<p style="font-size:13px;color:var(--ink-2);line-height:1.4">Мастер позвонит вам заранее, когда до вас дойдёт очередь — просто ждите звонка, ничего дополнительно делать не нужно.</p>
+</div>
+</div>
+</div>
 </div>
 
 <script>
 var BASE_URL = 'https://hyjyfmgskcjijyyblvtg.supabase.co/functions/v1/sync';
 var SHOP = new URLSearchParams(location.search).get('shop') || '';
 var LKEY = 'client_bookings_v3' + (SHOP ? '_' + SHOP : '');
-var DEVICE_CAP = 3;                // сколько активных (незавершённых) записей можно держать с одного устройства одновременно
+var DEVICE_CAP = 3; // сколько активных (незавершённых) записей можно держать с одного устройства одновременно
 var submitting = false;
 var lastFeed = [];
 
@@ -140,6 +143,7 @@ function goToPicker(){
   var u=new URL(location.href);u.searchParams.delete('shop');
   location.href=u.toString();
 }
+
 var allShops=[],villageFilter='';
 function loadPicker(){
   document.getElementById('pickerView').style.display='block';
@@ -187,6 +191,7 @@ function chooseShop(id){
 function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})}
 function iso(d){var x=d||new Date();return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
 function uid(){return 'c'+Date.now()+Math.floor(Math.random()*900+100)}
+
 var MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 function ruDate(ds){
   var t=iso(),tm=iso(new Date(Date.now()+864e5));
@@ -212,7 +217,6 @@ function posInFeed(date,id,feed){
   var idx=sameDay.findIndex(function(x){return x.id===id;});
   return idx>=0?idx+1:null;
 }
-
 function showDone(date,id,feed){
   document.getElementById('form-card').style.display='none';
   document.getElementById('done-card').style.display='block';
@@ -249,6 +253,7 @@ function render(data){
   var info=data.info||{};
   document.getElementById('shopName').textContent=info.name||'Автосервис';
   document.getElementById('shopSub').textContent=info.hours?('работаем: '+info.hours):'электронная очередь';
+
   var infoHtml='';
   if(info.hours)infoHtml+='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><b>Часы работы</b><br>'+esc(info.hours)+'</div>';
   if(info.phone)infoHtml+='</div><div class="info" style="border-top:1px solid var(--line)"><svg viewBox="0 0 24 24"><path d="M4 5c0 8 7 15 15 15l3-4-6-2-2 2c-3-1-6-4-7-7l2-2-2-6z"/></svg><div><b>Телефон</b><br><a href="tel:'+esc(info.phone)+'" style="color:var(--blue);text-decoration:none">'+esc(info.phone)+'</a></div>';
@@ -259,9 +264,11 @@ function render(data){
   var mineIds=myBookings().map(function(b){return b.id;});
   var qEl=document.getElementById('qList');
   document.getElementById('qCount').textContent=feed.length?('всего: '+feed.length):'';
+
   var lbl={wait:'Ждёт',seen:'Принято',work:'В работе',part:'Ждёт деталь',done:'Готово'},
       cl={wait:'',seen:'',work:'work',part:'work',done:'done'},
       pl={wait:'p-wait',seen:'p-wait',work:'p-work',part:'p-work',done:'p-done'};
+
   if(!feed.length){qEl.innerHTML='<div class="empty">Пока никто не записан — вы можете быть первым</div>'}
   else{
     qEl.innerHTML=feed.map(function(c){
@@ -275,7 +282,6 @@ function render(data){
   }
   reconcile(feed);
 }
-
 function loadFeed(){
   if(!SHOP)return;
   if(!BASE_URL||BASE_URL.indexOf('http')!==0){
@@ -293,6 +299,7 @@ if(SHOP){
 } else {
   loadPicker();
 }
+
 document.getElementById('bdate').value=iso();
 document.getElementById('bdate').min=iso();
 
@@ -304,43 +311,37 @@ function submitForm(){
   var day=document.getElementById('bdate').value||iso();
   var err=document.getElementById('err');
   if(!name||!phone){err.textContent='Заполните имя и телефон.';err.style.display='block';return}
+  if(!document.getElementById('agree').checked){err.textContent='Нужно принять политику конфиденциальности.';err.style.display='block';return}
   if(!BASE_URL||BASE_URL.indexOf('http')!==0){err.textContent='Запись временно недоступна.';err.style.display='block';return}
   if(myBookings().length>=DEVICE_CAP){
     err.textContent='С этого устройства уже '+DEVICE_CAP+' активные записи. Дождитесь завершения одной или обратитесь в мастерскую напрямую.';
     err.style.display='block';return;
   }
   err.style.display='none';
-
   var id=uid();
   var rec={id:id,name:name,phone:phone,car:document.getElementById('car').value.trim(),
     plate:'',date:day,time:'',what:document.getElementById('what').value.trim(),
     status:'wait',ord:Date.now(),updated:Date.now(),deleted:0};
-
   doSubmit(rec,day,id,false);
 }
-
 function doSubmit(rec,day,id,confirmMove){
   submitting=true;
   var err=document.getElementById('err');
   var btn=document.getElementById('submitBtn');
   if(btn){btn.disabled=true;btn.textContent='Записываем…'}
-
   var body={board:true,shop:SHOP,date:day,queue:[Object.assign({},rec,{confirmMove:!!confirmMove})]};
-
   fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
     .then(function(r){return r.json()})
     .then(function(res){
       if(!res||!res.ok)throw new Error('fail');
       submitting=false;
       if(btn){btn.disabled=false;btn.textContent='Записаться'}
-
       if(res.conflicts&&res.conflicts[id]){
         var conf=res.conflicts[id],oldDay=conf.date;
         var ok=confirm('У вас уже есть запись на '+ruDate(oldDay)+'. Перенести её на '+ruDate(day)+'?');
         if(ok){doSubmit(rec,day,id,true);return}
         else{addBooking(oldDay,conf.id);loadFeed();return}
       }
-
       var realId=(res.idMap&&res.idMap[id])?res.idMap[id]:id;
       if(confirmMove){
         var mine=myBookings(),prev=mine.find(function(b){return b.id===realId;});
