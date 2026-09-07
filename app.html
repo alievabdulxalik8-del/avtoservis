@@ -159,8 +159,12 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     <div class="f"><label>Рабочие часы (покажутся клиентам)</label><input id="stHours" placeholder="Пн–Сб 9:00–19:00, вс выходной"></div>
     <div class="f"><label>Придумайте логин (латиницей, без пробелов)</label><input id="stShop" placeholder="akusha-avto"></div>
     <div class="f"><label>Придумайте пароль</label><input id="stPass" type="password"></div>
-    <div class="err" id="setupErr"></div>
-    <button class="b pri" onclick="finishSetup()" style="width:100%">Зарегистрироваться</button>
+   <div class="f" style="display:flex;align-items:flex-start;gap:8px">
+<input type="checkbox" id="stAgree" style="width:auto;margin-top:3px">
+<label style="font-weight:400;font-size:13px;color:var(--ink-2)">Я согласен с <a href="/privacy.html" target="_blank" style="color:var(--blue)">политикой конфиденциальности</a></label>
+</div>
+<div class="err" id="setupErr"></div>
+<button class="b pri" onclick="finishSetup()" style="width:100%">Зарегистрироваться</button>
     <button class="b ghost" onclick="showAuth('landing')" style="width:100%;margin-top:8px">Назад</button>
   </div>
 </div>
@@ -457,6 +461,7 @@ function finishSetup(){
   var pass=document.getElementById('stPass').value;
   var e=document.getElementById('setupErr');
   if(!name||!shop||!pass){e.textContent='Заполните название, логин и пароль.';e.style.display='block';return}
+if(!document.getElementById('stAgree').checked){e.textContent='Нужно принять политику конфиденциальности.';e.style.display='block';return}
   e.style.display='none';
   var cfg={name:name,master:document.getElementById('stFio').value.trim(),
     village:document.getElementById('stVillage').value.trim(),
