@@ -133,6 +133,14 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
     <button class="b pri" style="width:100%;margin-bottom:8px" onclick="showAuth('login')">Войти</button>
     <button class="b" style="width:100%" onclick="showAuth('register')">У меня ещё нет аккаунта — зарегистрироваться</button>
   </div>
+  <details style="margin-top:14px;font-size:13px;color:var(--ink-2)">
+    <summary style="cursor:pointer;font-weight:700;color:var(--ink)">Как это работает</summary>
+    <p style="margin-top:8px">1. Регистрируетесь — название мастерской, логин и пароль.<br>
+    2. Добавляете приложение на главный экран телефона.<br>
+    3. «+ Записать» — клиент в очередь, «+ Наряд» — заказ-наряд с печатью.<br>
+    4. Копируете ссылку для клиентов из Настроек и рассылаете её.</p>
+    <p style="margin-top:8px"><a href="/start.html" target="_blank" style="color:var(--blue)">Подробная инструкция →</a></p>
+  </details>
 </div>
 
 <div class="setup" id="loginForm" style="display:none">
@@ -227,6 +235,11 @@ label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);margin-bot
 
   <div class="page" id="p-set">
     <div class="bar"><button class="b sm" onclick="go('more')">← Назад</button><h2 style="margin-left:8px">Настройки</h2></div>
+    <div class="card pad" style="margin-bottom:12px">
+      <label>Как пользоваться</label>
+      <p style="font-size:13px;color:var(--ink-2);margin:6px 0 10px">Пошаговая инструкция: регистрация, добавление на экран, запись клиентов, заказ-наряды.</p>
+      <a class="b" style="display:block;text-align:center;text-decoration:none" href="/start.html" target="_blank">Открыть инструкцию</a>
+    </div>
     <div class="card pad">
       <div class="f"><label>Название</label><input id="sName"></div>
       <div class="g2">
