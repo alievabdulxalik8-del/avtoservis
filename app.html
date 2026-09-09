@@ -326,6 +326,9 @@ window.onerror=function(m,s,l){
 
 var KEY='autoqueue_solo_v1';
 var DEPLOY_URL='<?!= deployUrl ?>';
+/** Реестр разработчика — считает открытия приложения мастером. Необязателен: если не заполнен, просто не отправляется. */
+var REGISTRY_URL='';
+var MASTER_ID='megaservis';
 var D={queue:[],orders:[],config:{},cfgUpd:0,cfgDirty:0,device:{},lastSync:0};
 var editRec=null,editOrd=null,page='q',syncing=false,canStore=true;
 
@@ -378,8 +381,14 @@ function boot(){
   }
   applyAll();
   if(D.device.url)sync();
+  pingRegistry();
   setInterval(function(){if(!document.hidden)sync()},20000);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)sync()});
+}
+function pingRegistry(){
+  if(!REGISTRY_URL||REGISTRY_URL.indexOf('exec')<0)return;
+  fetch(REGISTRY_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({event:'master_open',masterId:MASTER_ID,name:D.config.name||''})}).catch(function(){});
 }
 function finishSetup(){
   var name=document.getElementById('stName').value.trim();

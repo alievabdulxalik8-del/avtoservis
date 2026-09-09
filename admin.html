@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Реестр автосервисов</title>
+<style>
+:root{--ink:#101820;--ink-2:#4A5964;--paper:#E8ECEF;--card:#fff;--line:#D4DBE0;
+--blue:#17549E;--blue-bg:#E4EDF9;--amber:#B9740A;--amber-bg:#FCEFD8;
+--green:#1B7048;--green-bg:#DDF0E6;--red:#B02A2A;--red-bg:#FBE6E6;--r:14px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+.wrap{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;margin-bottom:2px}
+.sub{color:var(--ink-2);font-size:14px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);margin-bottom:16px;overflow:hidden}
+.pad{padding:18px}
+label{display:block;font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:5px}
+input{width:100%;font:inherit;font-size:16px;padding:12px 13px;border:1px solid var(--line);border-radius:10px;margin-bottom:13px;background:var(--card)}
+input:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:var(--blue)}
+button{font:inherit;font-size:15px;font-weight:700;padding:11px 16px;border-radius:10px;border:none;background:var(--blue);color:#fff;cursor:pointer}
+button:active{transform:scale(.98)}
+button.ghost{background:none;color:var(--blue);border:1px solid var(--line)}
+button.sm{padding:6px 11px;font-size:13px}
+.err{color:var(--red);font-size:13px;margin-bottom:10px;display:none}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.top b{font-size:14px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:11px 14px;font-size:13px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--ink-2);font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.03em}
+tr:last-child td{border-bottom:none}
+.name{font-weight:700;font-size:14px;color:var(--ink)}
+.id{color:var(--ink-2);font-size:12px}
+.pill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;display:inline-block}
+.p-on{background:var(--green-bg);color:var(--green)}
+.p-off{background:var(--red-bg);color:var(--red)}
+.num{font-weight:700}
+.empty{padding:22px 16px;text-align:center;color:var(--ink-2);font-size:14px}
+.scrollx{overflow-x:auto}
+.refresh{font-size:12px;color:var(--ink-2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Реестр автосервисов</h1>
+  <div class="sub">панель разработчика — кто подключён, кто заходил</div>
+
+  <div class="card" id="loginCard">
+    <div class="pad">
+      <div class="err" id="loginErr"></div>
+      <label>Адрес реестра (ссылка .../exec)</label>
+      <input id="regUrl" placeholder="https://script.google.com/macros/s/…/exec">
+      <label>Пароль</label>
+      <input id="regPass" type="password" placeholder="Пароль реестра">
+      <button onclick="login()" id="loginBtn">Войти</button>
+    </div>
+  </div>
+
+  <div class="card" id="listCard" style="display:none">
+    <div class="top">
+      <b id="countTxt">Мастера</b>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="refresh" id="refreshTxt"></span>
+        <button class="ghost sm" onclick="load()">Обновить</button>
+      </div>
+    </div>
+    <div class="scrollx">
+      <table>
+        <thead><tr>
+          <th>Автосервис</th><th>Статус</th><th>Открытий (мастер)</th><th>Последний вход мастера</th>
+          <th>Заходов клиентов</th><th>Последний клиент</th><th>Зарегистрирован</th><th></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyMsg" style="display:none">Пока ни один автосервис не подключился</div>
+  </div>
+</div>
+
+<script>
+var LKEY='registry_admin_v1';
+var state={url:'',pass:''};
+
+function esc(s){return String(s==null?'':s).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c]})}
+function fmt(ts){if(!ts)return '—';var d=new Date(Number(ts));if(isNaN(d))return '—';
+  return d.toLocaleDateString('ru-RU')+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
+
+function saved(){try{return JSON.parse(localStorage.getItem(LKEY)||'{}')}catch(e){return {}}}
+function saveCreds(){try{localStorage.setItem(LKEY,JSON.stringify(state))}catch(e){}}
+
+window.onload=function(){
+  var s=saved();
+  if(s.url)document.getElementById('regUrl').value=s.url;
+  if(s.url&&s.pass){state=s;load()}
+};
+
+function login(){
+  state.url=document.getElementById('regUrl').value.trim();
+  state.pass=document.getElementById('regPass').value;
+  var err=document.getElementById('loginErr');
+  if(!state.url||state.url.indexOf('exec')<0){err.textContent='Укажите ссылку реестра.';err.style.display='block';return}
+  if(!state.pass){err.textContent='Укажите пароль.';err.style.display='block';return}
+  err.style.display='none';
+  load();
+}
+
+function load(){
+  var err=document.getElementById('loginErr');
+  var btn=document.getElementById('loginBtn');
+  if(btn){btn.disabled=true;btn.textContent='Проверяю…'}
+  fetch(state.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({admin:true,pass:state.pass,action:'list'})})
+    .then(function(r){return r.json()})
+    .then(function(res){
+      if(btn){btn.disabled=false;btn.textContent='Войти'}
+      if(!res||!res.ok){err.textContent=(res&&res.error)||'Не удалось получить данные';err.style.display='block';return}
+      saveCreds();
+      document.getElementById('loginCard').style.display='none';
+      document.getElementById('listCard').style.display='block';
+      render(res.masters||[]);
+      document.getElementById('refreshTxt').textContent='обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    })
+    .catch(function(){
+      if(btn){btn.disabled=false;btn.textContent='Войти'}
+      err.textContent='Нет связи с реестром. Проверьте ссылку и подключение.';err.style.display='block';
+    });
+}
+
+function render(list){
+  list.sort(function(a,b){return (Number(b.updated)||0)-(Number(a.updated)||0)});
+  document.getElementById('countTxt').textContent='Мастера ('+list.length+')';
+  var tb=document.getElementById('rows');
+  document.getElementById('emptyMsg').style.display=list.length?'none':'block';
+  tb.innerHTML=list.map(function(m){
+    var on=m.status!=='blocked';
+    return '<tr>'+
+      '<td><div class="name">'+esc(m.name||m.id)+'</div><div class="id">'+esc(m.id)+'</div></td>'+
+      '<td><span class="pill '+(on?'p-on':'p-off')+'">'+(on?'активен':'заблокирован')+'</span></td>'+
+      '<td class="num">'+esc(m.masterOpens||0)+'</td>'+
+      '<td>'+fmt(m.lastMasterOpen)+'</td>'+
+      '<td class="num">'+esc(m.clientVisits||0)+'</td>'+
+      '<td>'+fmt(m.lastClientVisit)+'</td>'+
+      '<td>'+fmt(m.created)+'</td>'+
+      '<td><button class="ghost sm" onclick="toggle(\''+esc(m.id)+'\','+(on?'true':'false')+',this)">'+(on?'Заблокировать':'Разблокировать')+'</button></td>'+
+      '</tr>';
+  }).join('');
+}
+
+function toggle(id,isOn,btn){
+  btn.disabled=true;btn.textContent='…';
+  fetch(state.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({admin:true,pass:state.pass,action:'setStatus',id:id,status:isOn?'blocked':'active'})})
+    .then(function(r){return r.json()})
+    .then(function(res){if(res&&res.ok)load();else{btn.disabled=false;btn.textContent='Ошибка'}})
+    .catch(function(){btn.disabled=false;btn.textContent='Ошибка'});
+}
+</script>
+</body>
+</html>

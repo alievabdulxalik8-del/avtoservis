@@ -84,6 +84,9 @@ button:disabled{opacity:.5}
 
 <script>
 var BASE_URL = 'https://script.google.com/macros/s/AKfycbxQJJedFF8i_WMealF1McGd05djkOw04dxSvQvXNpvz1tiYma37dVwqR2a_20WuX3CJsQ/exec';
+/** Реестр разработчика — считает заходы клиентов. Необязателен: если не заполнен, просто не отправляется. */
+var REGISTRY_URL = '';
+var MASTER_ID = 'megaservis';
 var LKEY = 'client_bookings_v2';
 var DEVICE_CAP = 3;
 var submitting = false;
@@ -183,7 +186,13 @@ function loadToday(){
     .then(function(res){if(res&&res.ok)render(res)})
     .catch(function(){});
 }
-loadToday();setInterval(loadToday,15000);
+function pingRegistry(){
+  if(!REGISTRY_URL||REGISTRY_URL.indexOf('exec')<0)return;
+  fetch(REGISTRY_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({event:'client_visit',masterId:MASTER_ID})}).catch(function(){});
+}
+
+loadToday();setInterval(loadToday,15000);pingRegistry();
 document.getElementById('bdate').value=iso();
 document.getElementById('bdate').min=iso();
 refreshView();
