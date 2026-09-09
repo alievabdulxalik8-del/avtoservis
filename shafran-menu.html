@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#0E3B2B">
 <title>Shafran — меню и заказ</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yellowtail&family=Manrope:wght@500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lobster&family=Manrope:wght@500;700;800&display=swap">
 <style>
 :root{
   --dark:#0E3B2B;--dark-2:#123F2F;--paper:#F3F1EC;--card:#FFFFFF;
@@ -100,24 +100,35 @@ footer.note{text-align:center;color:var(--ink-2);font-size:12px;padding:20px 10p
           <stop offset="0%" stop-color="#1d5a41"/>
           <stop offset="100%" stop-color="#0a2a1e"/>
         </radialGradient>
-        <linearGradient id="petal" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#8f6fb0"/>
-          <stop offset="100%" stop-color="#4a2f66"/>
+        <linearGradient id="petal" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stop-color="#3d2454"/>
+          <stop offset="55%" stop-color="#6d4a8f"/>
+          <stop offset="100%" stop-color="#a483c2"/>
         </linearGradient>
+        <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="2.4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
       </defs>
       <circle cx="100" cy="100" r="98" fill="url(#bg)"/>
-      <g fill="none" stroke="#E7F0EA" stroke-width="2.6" stroke-linecap="round">
-        <path d="M100 44c6 12 20 16 20 32a20 20 0 0 1-40 0c0-16 14-20 20-32z"/>
-        <path d="M72 58c10 4 14 14 26 18"/>
-        <path d="M128 58c-10 4-14 14-26 18"/>
+      <circle cx="100" cy="100" r="88" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.2"/>
+      <ellipse cx="100" cy="62" rx="34" ry="26" fill="#4f9c72" opacity=".38" filter="url(#glow)"/>
+      <g fill="#F2FBF5" filter="url(#glow)">
+        <path d="M100 92 C88 84 82 72 86 58 C96 66 100 78 100 92 Z" transform="rotate(-6 100 92)" opacity=".95"/>
+        <path d="M100 92 C90 82 87 68 94 54 C102 64 104 78 100 92 Z" opacity=".98"/>
+        <path d="M100 92 C110 80 115 64 110 48 C122 58 122 76 100 92 Z" opacity=".98"/>
+        <path d="M100 92 C112 88 122 78 122 64 C130 74 126 88 100 92 Z" opacity=".9"/>
       </g>
-      <text x="100" y="118" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-weight="800" font-size="11.5" letter-spacing="3.5" fill="#DCEAE0">РЕСТОРАН</text>
-      <text x="100" y="150" text-anchor="middle" font-family="'Yellowtail',cursive" font-size="40" fill="#FFFFFF">Shafran</text>
-      <g transform="translate(100,176)">
-        <path d="M0-14 C-14-14 -18 4 0 14 C18 4 14-14 0-14 Z" fill="url(#petal)" opacity=".92"/>
-        <path d="M0-11 C-9-9 -11 3 0 10 C11 3 9-9 0-11 Z" fill="#c9a0d8" opacity=".55"/>
+      <text x="100" y="124" text-anchor="middle" font-family="Manrope,Arial,sans-serif" font-weight="800" font-size="11" letter-spacing="3.2" fill="#DCEAE0">РЕСТОРАН</text>
+      <text x="100" y="156" text-anchor="middle" font-family="'Lobster',cursive" font-size="36" fill="#FFFFFF">Shafran</text>
+      <g transform="translate(100,210)">
+        <g fill="url(#petal)">
+          <path d="M0 0 C-18-16 -22-38 -11-58 C-3-40 3-18 0 0 Z" transform="rotate(-32)"/>
+          <path d="M0 0 C-10-20 -9-42 0-62 C9-42 10-20 0 0 Z"/>
+          <path d="M0 0 C18-16 22-38 11-58 C3-40 -3-18 0 0 Z" transform="rotate(32)"/>
+        </g>
         <g stroke="#D9A441" stroke-width="1.3" stroke-linecap="round">
-          <path d="M0 0 L-13 9"/><path d="M0 0 L0 13"/><path d="M0 0 L13 9"/>
+          <path d="M0 0 L-9-25"/><path d="M0 0 L0-30"/><path d="M0 0 L9-25"/>
         </g>
       </g>
     </svg>
