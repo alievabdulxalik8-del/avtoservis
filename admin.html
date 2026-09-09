@@ -134,8 +134,10 @@ function render(list){
       '<td class="num">'+esc(m.client_visits||0)+'</td>'+
       '<td>'+fmt(m.last_client_visit)+'</td>'+
       '<td>'+fmt(m.updated)+'</td>'+
-      '<td><button class="'+(on?'dan':'ghost')+' sm" onclick="toggle(\''+esc(m.id)+'\','+(on?'true':'false')+',this)">'+(on?'Заблокировать':'Разблокировать')+'</button></td>'+
-      '</tr>';
+      '<td style="display:flex;gap:6px">'+
+        '<button class="'+(on?'dan':'ghost')+' sm" onclick="toggle(\''+esc(m.id)+'\','+(on?'true':'false')+',this)">'+(on?'Заблокировать':'Разблокировать')+'</button>'+
+        '<button class="dan sm" onclick="removeShop(\''+esc(m.id)+'\','+JSON.stringify(m.name||m.id)+',this)">Удалить</button>'+
+      '</td></tr>';
   }).join('');
 }
 
@@ -143,6 +145,16 @@ function toggle(id,isOn,btn){
   btn.disabled=true;btn.textContent='…';
   fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({admin:true,pass:pass,action:'setBlocked',shop:id,blocked:isOn})})
+    .then(function(r){return r.json()})
+    .then(function(res){if(res&&res.ok)load();else{btn.disabled=false;btn.textContent='Ошибка'}})
+    .catch(function(){btn.disabled=false;btn.textContent='Ошибка'});
+}
+
+function removeShop(id,name,btn){
+  if(!confirm('Удалить мастерскую «'+name+'»? Её очередь и наряды тоже будут удалены. Отменить это будет нельзя через панель.'))return;
+  btn.disabled=true;btn.textContent='…';
+  fetch(BASE_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({admin:true,pass:pass,action:'deleteShop',shop:id})})
     .then(function(r){return r.json()})
     .then(function(res){if(res&&res.ok)load();else{btn.disabled=false;btn.textContent='Ошибка'}})
     .catch(function(){btn.disabled=false;btn.textContent='Ошибка'});
