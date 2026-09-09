@@ -478,6 +478,10 @@ function boot(){
   }
   applyAll();
   if(D.device.shop)sync();
+  if(D.device.shop&&D.device.url){
+    fetch(D.device.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({masterOpen:true,shop:D.device.shop,pass:D.device.pass})}).catch(function(){});
+  }
   setInterval(function(){if(!document.hidden)sync()},20000);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)sync()});
 }
