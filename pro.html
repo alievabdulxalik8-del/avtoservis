@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Магасервис для мастеров СТО</title>
+<meta name="description" content="Электронная очередь и наряды для автосервиса — прямо с телефона, без бумажного журнала.">
+<style>
+:root{--ink:#101820;--ink-2:#4A5964;--paper:#E8ECEF;--card:#fff;--line:#D4DBE0;
+--blue:#17549E;--blue-bg:#E4EDF9;--amber:#B9740A;--amber-bg:#FCEFD8;
+--green:#1B7048;--green-bg:#DDF0E6;--r:14px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--paper);color:var(--ink);line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+section{padding:40px 0}
+.hero{background:var(--card);border-bottom:1px solid var(--line);padding:48px 0 40px;text-align:center}
+.hero h1{font-size:28px;font-weight:800;line-height:1.25;margin-bottom:14px}
+.hero .lead{font-size:16px;color:var(--ink-2);margin-bottom:26px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:inherit;font-size:17px;font-weight:700;
+  padding:15px 26px;border-radius:12px;border:none;background:var(--green);color:#fff;text-decoration:none;cursor:pointer}
+.btn:active{transform:scale(.98)}
+.btn svg{width:20px;height:20px;fill:currentColor;flex:0 0 20px}
+.btn-sub{margin-top:10px;font-size:13px;color:var(--ink-2)}
+h2.h{font-size:21px;font-weight:800;margin-bottom:20px;text-align:center}
+.cards{display:grid;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+.pain{display:flex;gap:14px;align-items:flex-start}
+.pain .ic{flex:0 0 38px;width:38px;height:38px;border-radius:10px;background:var(--amber-bg);color:var(--amber);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px}
+.pain p{font-size:15px;color:var(--ink)}
+.steps{counter-reset:s}
+.step{display:flex;gap:14px;align-items:flex-start}
+.step .n{counter-increment:s;flex:0 0 32px;width:32px;height:32px;border-radius:9px;background:var(--blue-bg);color:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.step .n::before{content:counter(s)}
+.step h3{font-size:15px;font-weight:700;margin-bottom:3px}
+.step p{font-size:14px;color:var(--ink-2)}
+.adv{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.adv .card{padding:16px}
+.adv .ic{width:30px;height:30px;border-radius:8px;background:var(--green-bg);color:var(--green);display:flex;
+  align-items:center;justify-content:center;font-weight:800;font-size:14px;margin-bottom:8px}
+.adv p{font-size:13.5px;color:var(--ink);font-weight:600;line-height:1.35}
+.price{background:var(--card);border:2px solid var(--blue);border-radius:var(--r);padding:28px 24px;text-align:center}
+.price .amount{font-size:38px;font-weight:800;color:var(--blue)}
+.price .per{font-size:15px;color:var(--ink-2);margin-bottom:14px}
+.price ul{list-style:none;text-align:left;margin:18px 0;font-size:14px;color:var(--ink)}
+.price li{padding:6px 0;padding-left:26px;position:relative}
+.price li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:800}
+.proof{background:var(--blue-bg);border-radius:var(--r);padding:20px;text-align:center;font-size:14.5px;color:var(--ink)}
+.proof b{color:var(--blue)}
+.final{background:var(--card);border-top:1px solid var(--line);text-align:center}
+.final h2.h{margin-bottom:10px}
+.final .lead{color:var(--ink-2);font-size:15px;margin-bottom:22px}
+footer{padding:20px 0 40px;text-align:center;font-size:12px;color:var(--ink-2)}
+footer a{color:var(--ink-2)}
+@media(min-width:560px){.hero h1{font-size:32px}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>Веди запись клиентов с телефона — без бумажного журнала</h1>
+    <p class="lead">Магасервис — электронная очередь и заказ-наряды для автосервиса. Клиент записывается сам по ссылке, вы видите всё в кабинете на телефоне.</p>
+    <a class="btn" id="ctaHero" href="#" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.2-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.2-.4-2.2-1.4-.8-.7-1.4-1.6-1.6-1.9-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.5.1-.2 0-.4 0-.5C11.6 9.6 11.1 8.4 11 8c-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-1 1-1 2.4s1 2.8 1.1 3c.1.2 2 3.1 5 4.3.7.3 1.2.4 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.3-.1-.1-.3-.2-.5-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.6 1.4 5.1L2 22l5-1.3c1.4.8 3.1 1.2 4.9 1.2h.1c5.5 0 10-4.5 10-10S17.5 2 12 2zm5.9 15.9c-.9.9-2.1 1.5-3.4 1.7-.9.2-2 .1-3.6-.6-1.5-.6-3.4-1.9-4.7-3.9-1-1.5-1.3-3-1.3-3.9 0-1.3.5-2.5 1.5-3.4.4-.3.9-.5 1.3-.5h.5c.4 0 .7 0 .9.6.3.7.9 2.3 1 2.5.1.2.1.4 0 .6-.1.2-.2.4-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.8 1.7.3.1.5.1.6-.1.2-.2.7-.9.9-1.2.2-.3.4-.2.6-.1l2.2 1c.3.1.5.2.6.3.1.3.1 1-.6 1.9z"/></svg>
+      Написать в WhatsApp
+    </a>
+    <div class="btn-sub">Ответим и подключим в течение дня</div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h2 class="h">Знакомо?</h2>
+    <div class="cards">
+      <div class="card pain"><div class="ic">1</div><p>Записи на бумажке теряются, клиент звонит — а вы уже не помните, на что и когда он записан</p></div>
+      <div class="card pain"><div class="ic">2</div><p>Два клиента подряд в одно время — накладка, кто-то ждёт зря</p></div>
+      <div class="card pain"><div class="ic">3</div><p>История по машине и контакты клиента нигде не сохраняются — каждый раз спрашиваете заново</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <h2 class="h">Как это работает</h2>
+    <div class="cards steps">
+      <div class="step"><div class="n"></div><div><h3>Клиент записывается сам</h3><p>Открывает вашу ссылку, выбирает день, оставляет телефон и что случилось с машиной — без звонков вам</p></div></div>
+      <div class="step"><div class="n"></div><div><h3>Вы видите всё в кабинете</h3><p>Живая очередь на телефоне: кто ждёт, кто в работе, кто готов — обновляется само</p></div></div>
+      <div class="step"><div class="n"></div><div><h3>Оформляете наряд</h3><p>Перечень работ, сумма, печать — и клиент готов, база истории машины сохраняется сама</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="h">Почему это удобно</h2>
+    <div class="adv">
+      <div class="card"><div class="ic">📱</div><p>Работает прямо в браузере телефона — ничего не устанавливать</p></div>
+      <div class="card"><div class="ic">🔗</div><p>Своя ссылка для клиентов — киньте в статус или чат</p></div>
+      <div class="card"><div class="ic">🖨️</div><p>Печать заказ-нарядов и учёт должников</p></div>
+      <div class="card"><div class="ic">🔒</div><p>Данные под паролем — доступны только вам</p></div>
+      <div class="card"><div class="ic">💬</div><p>Клиенты видят очередь сами — не звонят «где я»</p></div>
+      <div class="card"><div class="ic">⚡</div><p>Настройка за 5–10 минут, без техподдержки</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <h2 class="h">Тариф</h2>
+    <div class="price">
+      <div class="amount">499 ₽</div>
+      <div class="per">в месяц, без скрытых платежей</div>
+      <ul>
+        <li>Кабинет мастера и страница записи для ваших клиентов</li>
+        <li>Электронная очередь и заказ-наряды без ограничений</li>
+        <li>Работает на любом количестве ваших устройств</li>
+      </ul>
+      <a class="btn" id="ctaPrice" href="#" target="_blank" rel="noopener" style="width:100%">Подключить</a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="proof">Уже используют мастерские в <b>Акушинском районе Дагестана</b> — присоединяйтесь</div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2 class="h">Готовы попробовать?</h2>
+    <p class="lead">Напишите — расскажем и подключим в тот же день</p>
+    <a class="btn" id="ctaFinal" href="#" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.2-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.2-.4-2.2-1.4-.8-.7-1.4-1.6-1.6-1.9-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.5.1-.2 0-.4 0-.5C11.6 9.6 11.1 8.4 11 8c-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.5.1-.7.3-.2.3-1 1-1 2.4s1 2.8 1.1 3c.1.2 2 3.1 5 4.3.7.3 1.2.4 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.6-.7 1.9-1.3.2-.6.2-1.1.2-1.3-.1-.1-.3-.2-.5-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.6 1.4 5.1L2 22l5-1.3c1.4.8 3.1 1.2 4.9 1.2h.1c5.5 0 10-4.5 10-10S17.5 2 12 2zm5.9 15.9c-.9.9-2.1 1.5-3.4 1.7-.9.2-2 .1-3.6-.6-1.5-.6-3.4-1.9-4.7-3.9-1-1.5-1.3-3-1.3-3.9 0-1.3.5-2.5 1.5-3.4.4-.3.9-.5 1.3-.5h.5c.4 0 .7 0 .9.6.3.7.9 2.3 1 2.5.1.2.1.4 0 .6-.1.2-.2.4-.3.5l-.4.5c-.1.2-.3.4-.1.7.2.3.9 1.4 1.9 2.3 1.3 1.1 2.4 1.5 2.8 1.7.3.1.5.1.6-.1.2-.2.7-.9.9-1.2.2-.3.4-.2.6-.1l2.2 1c.3.1.5.2.6.3.1.3.1 1-.6 1.9z"/></svg>
+      Написать в WhatsApp
+    </a>
+    <div class="btn-sub">Или позвоните: <a href="tel:+79887960644" style="color:var(--blue);text-decoration:none;font-weight:700">+7 988 796-06-44</a></div>
+  </div>
+</section>
+
+<footer>
+  <a href="/">Я уже клиент — на страницу записи</a>
+</footer>
+
+<script>
+var WA_NUM='79887960644';
+var WA_MSG='Здравствуйте, хочу подключить Магасервис';
+var waHref='https://wa.me/'+WA_NUM+'?text='+encodeURIComponent(WA_MSG);
+['ctaHero','ctaPrice','ctaFinal'].forEach(function(id){
+  var el=document.getElementById(id);
+  if(el)el.href=waHref;
+});
+</script>
+</body>
+</html>
